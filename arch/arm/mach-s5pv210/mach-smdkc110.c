@@ -1494,8 +1494,9 @@ static void __init smdkv210_dm9000_init(void)
 }
 
 static struct i2c_board_info smdkv210_i2c_devs0[] __initdata = {
-	{ I2C_BOARD_INFO("24c08", 0x50), },     /* Samsung S524AD0XD1 */
+//	{ I2C_BOARD_INFO("24c08", 0x50), },     /* Samsung S524AD0XD1 */
 	{ I2C_BOARD_INFO("wm8580", 0x1b), },
+	{ I2C_BOARD_INFO("Goodix-TS", 0x5d), },
 };
 
 static struct i2c_board_info smdkv210_i2c_devs1[] __initdata = {
@@ -1807,7 +1808,7 @@ void Stop()
 }
 
 
-#if 1
+#if 0
 void SPI_WriteComm(u16 reg)
 {
 	u16 high,low,bit;
@@ -2477,6 +2478,7 @@ void spi_16bit_data(u16 param)
 
 void OTM8018B_HSD50_RGB_mode(void)
 {
+	SPI_Initial();
 	spi_16bit_reg_wr(0xff,0x00); spi_16bit_data(0x80);
 	spi_16bit_reg_wr(0xff,0x01); spi_16bit_data(0x09);
 	spi_16bit_reg_wr(0xff,0x02); spi_16bit_data(0x01);
@@ -2788,8 +2790,8 @@ static void __init smdkv210_machine_init(void)
 	//s3c_ide_set_platdata(&smdkv210_ide_pdata);
 
 //	s3c_fb_set_platdata(&smdkv210_lcd0_pdata);
-	OTM8018B_init();
-	//OTM8018B_HSD50_RGB_mode();
+	//OTM8018B_init();
+	OTM8018B_HSD50_RGB_mode();
 	printk("----------------------s3c_fb_set_platdata(&lte480wv_fb_data)------------------------------\n");
 	s3c_fb_set_platdata(&lte480wv_fb_data);
 
