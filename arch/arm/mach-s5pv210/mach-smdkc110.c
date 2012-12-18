@@ -424,13 +424,29 @@ static struct samsung_keypad_platdata smdkv210_keypad_data __initdata = {
 #ifdef CONFIG_KEYBOARD_GPIO
 static struct gpio_keys_button gpio_buttons[] = { 
   {  
-   .gpio  = S5PV210_GPH0(0),  
-   .code  = KEY_BACK,   
-   .desc  = "key_back",  
+   .gpio  = S5PV210_GPH1(1),  
+   .code  = KEY_VOLUMEUP,   
+   .desc  = "volume_up",  
    .active_low = 1,  
    //.wakeup  = 1,  
-   .debounce_interval =100 //去抖动  
- }  
+   .debounce_interval =100
+ }, 
+  {  
+   .gpio  = S5PV210_GPH1(2),  
+   .code  = KEY_VOLUMEDOWN,   
+   .desc  = "volume_down",  
+   .active_low = 1,  
+   //.wakeup  = 1,  
+   .debounce_interval =100
+ }, 
+  {  
+   .gpio  = S5PV210_GPH1(3),  
+   .code  = KEY_BACK,   
+   .desc  = "key_scan",  
+   .active_low = 1,  
+   //.wakeup  = 1,  
+   .debounce_interval =100
+ }, 
 }; 
   
 static struct gpio_keys_platform_data gpio_button_data = {  
