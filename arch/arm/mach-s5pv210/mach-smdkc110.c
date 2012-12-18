@@ -15,7 +15,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/regulator/fixed.h>
 #include <linux/regulator/machine.h>
-#include <linux/mfd/max8698.h>
+//#include <linux/mfd/max8698.h>
 #include <mach/power-domain.h>
 #include <linux/init.h>
 #include <linux/serial_core.h>
@@ -421,6 +421,31 @@ static struct samsung_keypad_platdata smdkv210_keypad_data __initdata = {
 	.rows		= 8,
 	.cols		= 8,
 };
+#ifdef CONFIG_KEYBOARD_GPIO
+static struct gpio_keys_button gpio_buttons[] = { 
+  {  
+   .gpio  = S5PV210_GPH0(0),  
+   .code  = KEY_BACK,   
+   .desc  = "key_back",  
+   .active_low = 1,  
+   //.wakeup  = 1,  
+   .debounce_interval =100 //去抖动  
+ }  
+}; 
+  
+static struct gpio_keys_platform_data gpio_button_data = {  
+ .buttons = gpio_buttons,  
+ .nbuttons = ARRAY_SIZE(gpio_buttons)
+};  
+  
+static struct platform_device s3c_device_gpio_button = {  
+ .name  = "gpio-keys",  
+ .id  = -1,  
+ .dev  = {  
+  .platform_data = &gpio_button_data
+ }  
+};  
+#endif
 
 static struct resource smdkv210_dm9000_resources[] = {
 	[0] = {
@@ -1053,6 +1078,71 @@ struct s3c_adc_mach_info {
         int resolution;
 };
 
+/*MMA7660gsensor*/
+#if defined (CONFIG_GS_MMA7660)
+#define MMA8452_INT_PIN   S5PV210_GPH0(7)
+#include "../../../drivers/input/gsensor/mma7660.h"
+/*
+static int mma8452_init_platform_hw(void)
+{
+	int ret;
+	ret = gpio_request(MMA8452_INT_PIN,"GSENSOR_INT");
+	if (ret < 0)
+	{
+		printk("mma8452 int request failed\n");
+		return -ENODEV;
+	}
+	else
+	{
+		gpio_direction_input(MMA8452_INT_PIN);//as input
+		s3c_gpio_setpull(MMA8452_INT_PIN, S3C_GPIO_PULL_NONE);//
+		s3c_gpio_cfgpin(MMA8452_INT_PIN, S3C_GPIO_SFN(0xF));//as int
+	}
+	return 0;
+}
+*/
+static struct gsensor_platform_data mma8452_info = {
+	.model = 8452,
+	.swap_xy = 0,
+	.swap_xyz = 1,
+	//.init_platform_hw = mma8452_init_platform_hw,
+	.orientation = {-1, 0, 0, 0, 0, 1, 0, -1, 0},
+};
+#endif
+
+/*MMA8452 gsensor*/
+#if defined (CONFIG_GS_MMA8452)
+#define MMA8452_INT_PIN   S5PV210_GPH0(7)
+#include "../../../drivers/input/gsensor/mma8452.h"
+/*
+static int mma8452_init_platform_hw(void)
+{
+	int ret;
+	ret = gpio_request(MMA8452_INT_PIN,"GSENSOR_INT");
+	if (ret < 0)
+	{
+		printk("mma8452 int request failed\n");
+		return -ENODEV;
+	}
+	else
+	{
+		gpio_direction_input(MMA8452_INT_PIN);//as input
+		s3c_gpio_setpull(MMA8452_INT_PIN, S3C_GPIO_PULL_NONE);//
+		s3c_gpio_cfgpin(MMA8452_INT_PIN, S3C_GPIO_SFN(0xF));//as int
+	}
+
+	return 0;
+}
+*/
+static struct gsensor_platform_data mma8452_info = {
+	.model = 8452,
+	.swap_xy = 0,
+	.swap_xyz = 0,
+  //.init_platform_hw = mma8452_init_platform_hw,
+  .orientation = {-1, 0, 0, 0, 0, 1, 0, -1, 0},
+};
+#endif
+
 static struct platform_device *smdkv210_devices[] __initdata = {
 	&s3c_device_adc,
 	&s3c_device_cfcon,
@@ -1065,25 +1155,28 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 	&s3c_device_hsmmc1,
 #endif
 #ifdef CONFIG_S3C_DEV_HSMMC2
-	&s3c_device_hsmmc2,
+	//&s3c_device_hsmmc2,
 #endif
 #ifdef CONFIG_S3C_DEV_HSMMC3
-	&s3c_device_hsmmc3,
+	//&s3c_device_hsmmc3,
 #endif
 	&s3c_device_i2c0,
 	&s3c_device_i2c1,
 	&s3c_device_i2c2,
+#ifdef CONFIG_KEYBOARD_GPIO
+	&s3c_device_gpio_button,
+#endif
 #ifdef CONFIG_TOUCHSCREEN_EGALAX
-	&s3c_device_i2c5,
+	//&s3c_device_i2c5,
 #endif
 	&s3c_device_rtc,
-	&s3c_device_ts,
+	//&s3c_device_ts,
 	&s3c_device_wdt,
 	&s5pv210_device_ac97,
 	&s5pv210_device_iis0,
 	&s5pv210_device_spdif,
 	&samsung_asoc_dma,
-	&samsung_device_keypad,
+	//&samsung_device_keypad,
 	&smdkv210_dm9000,
 	&smdkv210_lcd_lte480wv,
 	&s3c_device_timer[3],
@@ -1519,13 +1612,30 @@ static struct i2c_board_info smdkv210_i2c_devs2[] __initdata = {
         },
 #endif
 #if defined(CONFIG_KP_AXP20)
-        {
-									.type = "axp_mfd",
-									.addr = 0x34,
-									.irq =S5PV210_GPH0(1),
-									.platform_data = &axp_pdata,
-//                I2C_BOARD_INFO("axp_mfd", 0x68 >> 1),
-        },
+  {
+		.type = "axp_mfd",
+		.addr = 0x34,
+		.irq =S5PV210_GPH0(1),
+		.platform_data = &axp_pdata,
+  },
+#endif
+#if defined (CONFIG_GS_MMA8452)
+	{
+		.type	        = "gs_mma8452",
+		.addr	        = 0x1d,
+		.flags	      = 0,
+		.irq	        = MMA8452_INT_PIN,
+		.platform_data= &mma8452_info,
+	},
+#endif
+#if defined (CONFIG_GS_MMA7660)
+	{
+		.type	        = "gs_mma8452",
+		.addr	        = 0x4c,
+		.flags	      = 0,
+		.irq	        = MMA8452_INT_PIN,
+		.platform_data= &mma8452_info,
+	},
 #endif
 };
 
@@ -1693,7 +1803,7 @@ void s5p_pm_power_off(void)
 	while (1);
 }
 
-void SPI_Initial()
+void SPI_Initial(void)
 {
 	int err;
 	err = gpio_request(S5PV210_GPJ2(4), "LCD_PWREN");
@@ -1763,7 +1873,7 @@ void SPI_Initial()
 	mdelay(20);
 }
 
-void SPI_Uninitial()
+void SPI_Uninitial(void)
 {
 	gpio_free(S5PV210_GPJ2(4));
 	gpio_free(S5PV210_GPJ2(3));
@@ -1787,7 +1897,7 @@ void SetSDA(int bHigh)
 	gpio_direction_output(S5PV210_GPB(3), bHigh ? 1 : 0);
 }
 
-void Start()
+void Start(void)
 {
 	SetCS(0);
 	udelay(10);
@@ -1797,7 +1907,7 @@ void Start()
 	udelay(10);
 }
 
-void Stop()
+void Stop(void)
 {
 	SetCS(1);
 	udelay(10);
@@ -2787,6 +2897,9 @@ static void __init smdkv210_machine_init(void)
 	i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
 #endif
 
+#ifdef CONFIG_CPU_FREQ 
+	s5pv210_cpufreq_set_platdata(&s5pv210_cpufreq_plat);
+#endif
 	//s3c_ide_set_platdata(&smdkv210_ide_pdata);
 
 //	s3c_fb_set_platdata(&smdkv210_lcd0_pdata);
