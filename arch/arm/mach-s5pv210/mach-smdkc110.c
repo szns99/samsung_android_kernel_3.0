@@ -1168,10 +1168,10 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 	&s3c_device_hsmmc0,
 #endif
 #ifdef CONFIG_S3C_DEV_HSMMC1
-	&s3c_device_hsmmc1,
+	//&s3c_device_hsmmc1,
 #endif
 #ifdef CONFIG_S3C_DEV_HSMMC2
-	//&s3c_device_hsmmc2,
+	&s3c_device_hsmmc2,
 #endif
 #ifdef CONFIG_S3C_DEV_HSMMC3
 	//&s3c_device_hsmmc3,
