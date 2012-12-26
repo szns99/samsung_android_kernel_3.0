@@ -1605,7 +1605,7 @@ static void __init smdkv210_dm9000_init(void)
 static struct i2c_board_info smdkv210_i2c_devs0[] __initdata = {
 //	{ I2C_BOARD_INFO("24c08", 0x50), },     /* Samsung S524AD0XD1 */
 //	{ I2C_BOARD_INFO("wm8580", 0x1b), },
-	{ I2C_BOARD_INFO("ft5x0x_ts", 0x70), },
+	{ I2C_BOARD_INFO("ft5x0x_ts", 0x38), },
 };
 
 static struct i2c_board_info smdkv210_i2c_devs1[] __initdata = {
