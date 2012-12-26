@@ -963,7 +963,7 @@ static void ft5x0x_ts_pen_irq_work(struct work_struct *work)
 		ft5x0x_report_value();
 	}
 	
-	enable_irq(IRQ_EINT(6));
+	enable_irq(this_client->irq);
 }
 /***********************************************************************************************
 Name	:	 
@@ -981,7 +981,7 @@ static irqreturn_t ft5x0x_ts_interrupt(int irq, void *dev_id)
 	struct ft5x0x_ts_data *ft5x0x_ts = dev_id;
 
 
-	disable_irq(IRQ_EINT(6));
+	disable_irq(this_client->irq);
 	if (!work_pending(&ft5x0x_ts->pen_event_work)) {
 		queue_work(ft5x0x_ts->ts_workqueue, &ft5x0x_ts->pen_event_work);
 	}
@@ -1007,7 +1007,7 @@ static void ft5x0x_ts_suspend(struct early_suspend *handler)
 
 	printk("==ft5x0x_ts_suspend=\n");
 //	disable_irq(this_client->irq);
-//	disable_irq(IRQ_EINT(6));
+//	disable_irq(client->irq);
 //	cancel_work_sync(&ts->pen_event_work);
 //	flush_workqueue(ts->ts_workqueue);
 	// ==set mode ==, 
@@ -1034,7 +1034,7 @@ static void ft5x0x_ts_resume(struct early_suspend *handler)
 //	__gpio_set_pin(GPIO_FT5X0X_WAKE);			//set wake = 1,base on system
 //	msleep(100);
 //	enable_irq(this_client->irq);
-//	enable_irq(IRQ_EINT(6));
+//	enable_irq(client->irq);
 }
 #endif  //CONFIG_HAS_EARLYSUSPEND
 /***********************************************************************************************
@@ -1085,15 +1085,19 @@ ft5x0x_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 		goto exit_create_singlethread;
 	}
 
+	gpio_request(S5PV210_GPH0(6),NULL);
+	GTP_GPIO_AS_INT(S5PV210_GPH0(6));
+	//client->irq = gpio_to_irq(client->irq);
+	
 
-	err = request_irq(IRQ_EINT(6), ft5x0x_ts_interrupt, IRQF_TRIGGER_FALLING, "ft5x0x_ts", ft5x0x_ts);
+	err = request_irq(client->irq, ft5x0x_ts_interrupt, IRQF_TRIGGER_FALLING, "ft5x0x_ts", ft5x0x_ts);
 	if (err < 0) {
 		dev_err(&client->dev, "ft5x0x_probe: request irq failed\n");
 		goto exit_irq_request_failed;
 	}
 
 
-	disable_irq(IRQ_EINT(6));
+	disable_irq(client->irq);
 
 	input_dev = input_allocate_device();
 	if (!input_dev) {
@@ -1174,7 +1178,7 @@ printk("%s, Line %d\n", __FILE__, __LINE__);
     fts_ctpm_update_project_setting();
 #endif
 printk("%s, Line %d\n", __FILE__, __LINE__);
-    enable_irq(IRQ_EINT(6));
+    enable_irq(client->irq);
 printk("%s, Line %d\n", __FILE__, __LINE__);
 	printk("[FTS] ==probe over =\n");
     return 0;
@@ -1183,7 +1187,7 @@ exit_input_register_device_failed:
 	input_free_device(input_dev);
 exit_input_dev_alloc_failed:
 //	free_irq(client->irq, ft5x0x_ts);
-	free_irq(IRQ_EINT(6), ft5x0x_ts);
+	free_irq(client->irq, ft5x0x_ts);
 exit_irq_request_failed:
 //exit_platform_data_null:
 	cancel_work_sync(&ft5x0x_ts->pen_event_work);
@@ -1214,7 +1218,7 @@ static int __devexit ft5x0x_ts_remove(struct i2c_client *client)
 	ft5x0x_ts = i2c_get_clientdata(client);
 	unregister_early_suspend(&ft5x0x_ts->early_suspend);
 //	free_irq(client->irq, ft5x0x_ts);
-	free_irq(IRQ_EINT(6), ft5x0x_ts);
+	free_irq(client->irq, ft5x0x_ts);
 	input_unregister_device(ft5x0x_ts->input_dev);
 	kfree(ft5x0x_ts);
 	cancel_work_sync(&ft5x0x_ts->pen_event_work);
@@ -1269,7 +1273,7 @@ static int __init ft5x0x_ts_init(void)
 
 	GTP_GPIO_OUTPUT(GTP_RST_PORT,1);
 	
-	GTP_GPIO_AS_INT(GTP_INT_PORT);
+	//GTP_GPIO_AS_INT(GTP_INT_PORT);
 
 	ret = i2c_add_driver(&ft5x0x_ts_driver);
 	printk("ret=%d\n",ret);

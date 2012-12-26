@@ -40,7 +40,7 @@
 #define mmaprintkd(x...)
 #endif
 
-#if 0
+#if 1
 #define mmaprintkf(x...) printk(x)
 #else
 #define mmaprintkf(x...)

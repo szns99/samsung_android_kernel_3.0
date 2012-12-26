@@ -1158,6 +1158,60 @@ static struct gsensor_platform_data mma8452_info = {
   .orientation = {-1, 0, 0, 0, 0, 1, 0, -1, 0},
 };
 #endif
+/*ft5x0x touchpad*/
+#if defined (CONFIG_TOUCHSCREEN_FT5X06_TS)
+struct ft5x0x_platform_data{
+	  u16     model;
+    int     (*init_platform_hw)(void);
+    void    (*exit_platform_hw)(void);
+};
+
+#define TOUCH_FT5X0X_RESET_PIN S5PV210_GPJ3(7)
+#define TOUCH_FT5X0X_INT_PIN S5PV210_GPH0(6)
+
+static int ft5x0x_exit_platform_hw(void)
+{
+    gpio_free(TOUCH_FT5X0X_INT_PIN);
+    gpio_free(TOUCH_FT5X0X_RESET_PIN);
+}
+
+static int ft5x0x_init_platform_hw(void)
+{
+    s32 ret = 0;
+
+   /* request interrupt */
+    if((ret = gpio_request(TOUCH_FT5X0X_INT_PIN, NULL)) != 0)
+    {
+	    printk("%s,%s,gpio request error!3\n", __LINE__, __FUNCTION__);
+	    goto exit_ft5x0x_init;
+    }
+
+    /* set reset pin */
+    if((ret = gpio_request(TOUCH_FT5X0X_RESET_PIN, NULL)) != 0)
+    {
+	    printk("%s,%s,gpio request error!4\n", __LINE__, __FUNCTION__);
+	    goto exit_ft5x0x_init;
+    }      
+    gpio_direction_output(TOUCH_FT5X0X_RESET_PIN, 0);
+    mdelay(100);
+    gpio_set_value(TOUCH_FT5X0X_RESET_PIN, 1);
+    mdelay(100);
+
+exit_ft5x0x_init:
+    if (ret < 0) {
+        ft5x0x_exit_platform_hw();
+    }
+
+    return ret;
+}
+
+static struct ft5x0x_platform_data ft5x0x_info = {
+    .model= 5006,
+    .init_platform_hw= ft5x0x_init_platform_hw,
+    .exit_platform_hw= ft5x0x_exit_platform_hw,
+
+};
+#endif
 
 static struct platform_device *smdkv210_devices[] __initdata = {
 	&s3c_device_adc,
@@ -1183,17 +1237,17 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 	&s3c_device_gpio_button,
 #endif
 #ifdef CONFIG_TOUCHSCREEN_EGALAX
-	//&s3c_device_i2c5,
+	&s3c_device_i2c5,
 #endif
 	&s3c_device_rtc,
-	//&s3c_device_ts,
+	&s3c_device_ts,
 	&s3c_device_wdt,
 	&s5pv210_device_ac97,
 	&s5pv210_device_iis0,
 	&s5pv210_device_spdif,
 	&samsung_asoc_dma,
 	//&samsung_device_keypad,
-	&smdkv210_dm9000,
+	//&smdkv210_dm9000,
 	&smdkv210_lcd_lte480wv,
 	&s3c_device_timer[3],
 	&smdkv210_backlight_device,
@@ -1605,7 +1659,16 @@ static void __init smdkv210_dm9000_init(void)
 static struct i2c_board_info smdkv210_i2c_devs0[] __initdata = {
 //	{ I2C_BOARD_INFO("24c08", 0x50), },     /* Samsung S524AD0XD1 */
 //	{ I2C_BOARD_INFO("wm8580", 0x1b), },
-	{ I2C_BOARD_INFO("ft5x0x_ts", 0x38), },
+#ifdef CONFIG_TOUCHSCREEN_FT5X06_TS
+  {
+      .type           = "ft5x0x_ts",
+      .addr           = 0x38,
+      .flags          = 0,
+      .irq            = TOUCH_FT5X0X_INT_PIN,
+      .platform_data  = &ft5x0x_info,
+  },
+	//{ I2C_BOARD_INFO("ft5x0x_ts", 0x38), }
+#endif
 };
 
 static struct i2c_board_info smdkv210_i2c_devs1[] __initdata = {
@@ -3077,6 +3140,8 @@ void OTM8018B_HSD50_RGB_mode(void)
 	spi_16bit_reg_wr(0xcc,0xde); spi_16bit_data(0x00);
 
 	spi_16bit_reg_wr(0xb2,0x82); spi_16bit_data(0x00);
+	spi_16bit_reg_wr(0x0b,0x00); spi_16bit_data(0x08);
+	//spi_16bit_reg_wr(0x3A,0x00); spi_16bit_data(0x77);
 	spi_16bit_reg_wr(0x11,0x00);
 	mdelay(150);
 	spi_16bit_reg_wr(0x29,0x00);
@@ -3110,9 +3175,6 @@ static void __init smdkv210_machine_init(void)
 	i2c_register_board_info(5, i2c_devs5, ARRAY_SIZE(i2c_devs5));
 #endif
 
-#ifdef CONFIG_CPU_FREQ 
-	s5pv210_cpufreq_set_platdata(&s5pv210_cpufreq_plat);
-#endif
 	//s3c_ide_set_platdata(&smdkv210_ide_pdata);
 
 //	s3c_fb_set_platdata(&smdkv210_lcd0_pdata);
