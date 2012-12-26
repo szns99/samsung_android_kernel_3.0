@@ -61,6 +61,7 @@ obj-$(CONFIG_TOUCHSCREEN_WM97XX_MAINSTONE)	+= mainstone-wm97xx.o
 obj-$(CONFIG_TOUCHSCREEN_WM97XX_ZYLONITE)	+= zylonite-wm97xx.o
 obj-$(CONFIG_TOUCHSCREEN_W90X900)	+= w90p910_ts.o
 obj-$(CONFIG_TOUCHSCREEN_TPS6507X)	+= tps6507x-ts.o
+obj-$(CONFIG_TOUCHSCREEN_FT5X06_TS) += ft5x06_ts.o
 obj-$(CONFIG_TOUCHSCREEN_EGALAX)        += egalax_i2c.o
 #obj-y+=gt813_827_828.o gt813_827_828_update.o goodix_tool.o
 obj-$(CONFIG_TOUCHSCREEN_GT813_827_828) += gt813_827_828.o

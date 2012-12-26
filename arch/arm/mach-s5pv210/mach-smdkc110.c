@@ -794,17 +794,17 @@ static struct s3cfb_lcd lte480wv = {
         .width = S5PV210_LCD_WIDTH,
         .height = S5PV210_LCD_HEIGHT,
         .bpp = 32,
-        .freq = 40,
+        .freq = 28,
 
         .timing = {
-                .h_fp = 40,
-                .h_bp = 40,
-                .h_sw = 48,
-                .v_fp = 13,
+                .h_fp = 2,
+                .h_bp = 2,
+                .h_sw = 2,
+                .v_fp = 2,
                 .v_fpe = 1,
-                .v_bp = 29,
+                .v_bp = 5,
                 .v_bpe = 1,
-                .v_sw = 3,
+                .v_sw = 2,
         },
         .polarity = {
                 .rise_vclk = 1,
@@ -1604,8 +1604,8 @@ static void __init smdkv210_dm9000_init(void)
 
 static struct i2c_board_info smdkv210_i2c_devs0[] __initdata = {
 //	{ I2C_BOARD_INFO("24c08", 0x50), },     /* Samsung S524AD0XD1 */
-	{ I2C_BOARD_INFO("wm8580", 0x1b), },
-	{ I2C_BOARD_INFO("Goodix-TS", 0x5d), },
+//	{ I2C_BOARD_INFO("wm8580", 0x1b), },
+	{ I2C_BOARD_INFO("ft5x0x_ts", 0x70), },
 };
 
 static struct i2c_board_info smdkv210_i2c_devs1[] __initdata = {
@@ -1933,6 +1933,203 @@ void Stop(void)
 	udelay(50);
 }
 
+void NT35582_Write_Reg(u16 reg)
+{
+	u16 high,low,bit;
+	high = (reg>>8)|0x2000;
+	low = reg&0xff;
+	Start();
+	for(bit=0x8000;bit;bit>>=1)
+	{
+		if (high&bit)
+		{
+			SetSDA(1);
+		}
+		else
+		{
+			SetSDA(0);
+		}
+		SetSCL(0);
+		udelay(10);
+		SetSCL(1);
+		udelay(10);
+	}
+	Stop();
+	Start();
+	for(bit=0x8000;bit;bit>>=1)
+	{
+		if (low&bit)
+		{
+			SetSDA(1);
+		}
+		else
+		{
+			SetSDA(0);
+		}
+		udelay(10);
+		SetSCL(0);
+		udelay(10);
+		SetSCL(1);
+		udelay(10);
+	}
+	Stop();
+}
+
+void NT35582_Write_Data(u8 data)
+{
+	u16 bit,param;
+	param = data | 0x4000;
+	Start();
+	for(bit=0x8000;bit;bit>>=1)
+	{
+		if (param&bit)
+		{
+			SetSDA(1);
+		}
+		else
+		{
+			SetSDA(0);
+		}
+		udelay(10);
+		SetSCL(0);
+		udelay(10);
+		SetSCL(1);
+		udelay(10);
+	}
+	Stop();
+}
+
+void Init_5inch(void)
+{
+	SPI_Initial();
+
+	NT35582_Write_Reg(0x1100);
+	mdelay(2000);
+
+	NT35582_Write_Reg(0xC000); NT35582_Write_Data(0x86);  
+	NT35582_Write_Reg(0xC001); NT35582_Write_Data(0x00); 
+	NT35582_Write_Reg(0xC002); NT35582_Write_Data(0x86);
+	NT35582_Write_Reg(0xC003); NT35582_Write_Data(0x00);
+	NT35582_Write_Reg(0xC100); NT35582_Write_Data(0x40);
+	NT35582_Write_Reg(0xC200); NT35582_Write_Data(0x21);
+	NT35582_Write_Reg(0xC202); NT35582_Write_Data(0x02);
+	NT35582_Write_Reg(0xB600); NT35582_Write_Data(0x30);
+	NT35582_Write_Reg(0xB602); NT35582_Write_Data(0x30);
+	NT35582_Write_Reg(0xE000); NT35582_Write_Data(0x0E);
+	NT35582_Write_Reg(0xE001); NT35582_Write_Data(0x14);
+	NT35582_Write_Reg(0xE002); NT35582_Write_Data(0x25);
+	NT35582_Write_Reg(0xE003); NT35582_Write_Data(0x35);
+	NT35582_Write_Reg(0xE004); NT35582_Write_Data(0x1C);
+	NT35582_Write_Reg(0xE005); NT35582_Write_Data(0x2F);
+	NT35582_Write_Reg(0xE006); NT35582_Write_Data(0x5F);
+	NT35582_Write_Reg(0xE007); NT35582_Write_Data(0x3C);
+	NT35582_Write_Reg(0xE008); NT35582_Write_Data(0x21);
+	NT35582_Write_Reg(0xE009); NT35582_Write_Data(0x29);
+	NT35582_Write_Reg(0xE00A); NT35582_Write_Data(0x89);
+	NT35582_Write_Reg(0xE00B); NT35582_Write_Data(0x17);
+	NT35582_Write_Reg(0xE00C); NT35582_Write_Data(0x3A);
+	NT35582_Write_Reg(0xE00D); NT35582_Write_Data(0x4F);
+	NT35582_Write_Reg(0xE00E); NT35582_Write_Data(0x8B);
+	NT35582_Write_Reg(0xE00F); NT35582_Write_Data(0xAE);
+	NT35582_Write_Reg(0xE010); NT35582_Write_Data(0x4A);
+	NT35582_Write_Reg(0xE011); NT35582_Write_Data(0x4D);
+	NT35582_Write_Reg(0xE100); NT35582_Write_Data(0x0E);
+	NT35582_Write_Reg(0xE101); NT35582_Write_Data(0x14);
+	NT35582_Write_Reg(0xE102); NT35582_Write_Data(0x25);
+	NT35582_Write_Reg(0xE103); NT35582_Write_Data(0x35);
+	NT35582_Write_Reg(0xE104); NT35582_Write_Data(0x1C);
+	NT35582_Write_Reg(0xE105); NT35582_Write_Data(0x2F);
+	NT35582_Write_Reg(0xE106); NT35582_Write_Data(0x61);
+	NT35582_Write_Reg(0xE107); NT35582_Write_Data(0x3E);
+	NT35582_Write_Reg(0xE108); NT35582_Write_Data(0x21);
+	NT35582_Write_Reg(0xE109); NT35582_Write_Data(0x25);
+	NT35582_Write_Reg(0xE10A); NT35582_Write_Data(0x89);
+	NT35582_Write_Reg(0xE10B); NT35582_Write_Data(0x13);
+	NT35582_Write_Reg(0xE10C); NT35582_Write_Data(0x3A);
+	NT35582_Write_Reg(0xE10D); NT35582_Write_Data(0x4F);
+	NT35582_Write_Reg(0xE10E); NT35582_Write_Data(0x8B);
+	NT35582_Write_Reg(0xE10F); NT35582_Write_Data(0xAE);
+	NT35582_Write_Reg(0xE110); NT35582_Write_Data(0x4A);
+	NT35582_Write_Reg(0xE111); NT35582_Write_Data(0x4D);
+	NT35582_Write_Reg(0xE200); NT35582_Write_Data(0x0E);
+	NT35582_Write_Reg(0xE201); NT35582_Write_Data(0x14);
+	NT35582_Write_Reg(0xE202); NT35582_Write_Data(0x25);
+	NT35582_Write_Reg(0xE203); NT35582_Write_Data(0x35);
+	NT35582_Write_Reg(0xE204); NT35582_Write_Data(0x1C);
+	NT35582_Write_Reg(0xE205); NT35582_Write_Data(0x2F);
+	NT35582_Write_Reg(0xE206); NT35582_Write_Data(0x5F);
+	NT35582_Write_Reg(0xE207); NT35582_Write_Data(0x3C);
+	NT35582_Write_Reg(0xE208); NT35582_Write_Data(0x21);
+	NT35582_Write_Reg(0xE209); NT35582_Write_Data(0x29);
+	NT35582_Write_Reg(0xE20A); NT35582_Write_Data(0x89);
+	NT35582_Write_Reg(0xE20B); NT35582_Write_Data(0x17);
+	NT35582_Write_Reg(0xE20C); NT35582_Write_Data(0x3A);
+	NT35582_Write_Reg(0xE20D); NT35582_Write_Data(0x4F);
+	NT35582_Write_Reg(0xE20E); NT35582_Write_Data(0x8B);
+	NT35582_Write_Reg(0xE20F); NT35582_Write_Data(0xAE);
+	NT35582_Write_Reg(0xE210); NT35582_Write_Data(0x4A);
+	NT35582_Write_Reg(0xE211); NT35582_Write_Data(0x4D);
+	NT35582_Write_Reg(0xE300); NT35582_Write_Data(0x0E);
+	NT35582_Write_Reg(0xE301); NT35582_Write_Data(0x14);
+	NT35582_Write_Reg(0xE302); NT35582_Write_Data(0x25);
+	NT35582_Write_Reg(0xE303); NT35582_Write_Data(0x35);
+	NT35582_Write_Reg(0xE304); NT35582_Write_Data(0x1C);
+	NT35582_Write_Reg(0xE305); NT35582_Write_Data(0x2F);
+	NT35582_Write_Reg(0xE306); NT35582_Write_Data(0x61);
+	NT35582_Write_Reg(0xE307); NT35582_Write_Data(0x3E);
+	NT35582_Write_Reg(0xE308); NT35582_Write_Data(0x21);
+	NT35582_Write_Reg(0xE309); NT35582_Write_Data(0x25);
+	NT35582_Write_Reg(0xE30A); NT35582_Write_Data(0x89);
+	NT35582_Write_Reg(0xE30B); NT35582_Write_Data(0x13);
+	NT35582_Write_Reg(0xE30C); NT35582_Write_Data(0x3A);
+	NT35582_Write_Reg(0xE30D); NT35582_Write_Data(0x4F);
+	NT35582_Write_Reg(0xE30E); NT35582_Write_Data(0x8B);
+	NT35582_Write_Reg(0xE30F); NT35582_Write_Data(0xAE);
+	NT35582_Write_Reg(0xE310); NT35582_Write_Data(0x4A);
+	NT35582_Write_Reg(0xE311); NT35582_Write_Data(0x4D);
+	NT35582_Write_Reg(0xE400); NT35582_Write_Data(0x0E);
+	NT35582_Write_Reg(0xE401); NT35582_Write_Data(0x14);
+	NT35582_Write_Reg(0xE402); NT35582_Write_Data(0x25);
+	NT35582_Write_Reg(0xE403); NT35582_Write_Data(0x35);
+	NT35582_Write_Reg(0xE404); NT35582_Write_Data(0x1C);
+	NT35582_Write_Reg(0xE405); NT35582_Write_Data(0x2F);
+	NT35582_Write_Reg(0xE406); NT35582_Write_Data(0x5F);
+	NT35582_Write_Reg(0xE407); NT35582_Write_Data(0x3C);
+	NT35582_Write_Reg(0xE408); NT35582_Write_Data(0x21);
+	NT35582_Write_Reg(0xE409); NT35582_Write_Data(0x29);
+	NT35582_Write_Reg(0xE40A); NT35582_Write_Data(0x89);
+	NT35582_Write_Reg(0xE40B); NT35582_Write_Data(0x17);
+	NT35582_Write_Reg(0xE40C); NT35582_Write_Data(0x3A);
+	NT35582_Write_Reg(0xE40D); NT35582_Write_Data(0x4F);
+	NT35582_Write_Reg(0xE40E); NT35582_Write_Data(0x8B);
+	NT35582_Write_Reg(0xE40F); NT35582_Write_Data(0xAE);
+	NT35582_Write_Reg(0xE410); NT35582_Write_Data(0x4A);
+	NT35582_Write_Reg(0xE411); NT35582_Write_Data(0x4D);
+	NT35582_Write_Reg(0xE500); NT35582_Write_Data(0x0E);
+	NT35582_Write_Reg(0xE501); NT35582_Write_Data(0x14);
+	NT35582_Write_Reg(0xE502); NT35582_Write_Data(0x25);
+	NT35582_Write_Reg(0xE503); NT35582_Write_Data(0x35);
+	NT35582_Write_Reg(0xE504); NT35582_Write_Data(0x1C);
+	NT35582_Write_Reg(0xE505); NT35582_Write_Data(0x2F);
+	NT35582_Write_Reg(0xE506); NT35582_Write_Data(0x61);
+	NT35582_Write_Reg(0xE507); NT35582_Write_Data(0x3E);
+	NT35582_Write_Reg(0xE508); NT35582_Write_Data(0x21);
+	NT35582_Write_Reg(0xE509); NT35582_Write_Data(0x25);
+	NT35582_Write_Reg(0xE50A); NT35582_Write_Data(0x89);
+	NT35582_Write_Reg(0xE50B); NT35582_Write_Data(0x13);
+	NT35582_Write_Reg(0xE50C); NT35582_Write_Data(0x3A);
+	NT35582_Write_Reg(0xE50D); NT35582_Write_Data(0x4F);
+	NT35582_Write_Reg(0xE50E); NT35582_Write_Data(0x8B);
+	NT35582_Write_Reg(0xE50F); NT35582_Write_Data(0xAE);
+	NT35582_Write_Reg(0xE510); NT35582_Write_Data(0x4A);
+	NT35582_Write_Reg(0xE511); NT35582_Write_Data(0x4D);
+	NT35582_Write_Reg(0x3600); NT35582_Write_Data(0x00);
+	NT35582_Write_Reg(0x3a00); NT35582_Write_Data(0x77);
+	NT35582_Write_Reg(0x3B00); NT35582_Write_Data(0x0B);
+	NT35582_Write_Reg(0x0C00); NT35582_Write_Data(0x60);
+	mdelay(50);
+	NT35582_Write_Reg(0x2900);
+}
 
 #if 0
 void SPI_WriteComm(u16 reg)
@@ -2534,7 +2731,7 @@ static void  OTM8018B_init(void)  //********************************************
 	SPI_Uninitial();
 	mdelay(50);
 }
-#else
+//#else
 void spi_16bit_reg_wr(u8 addr, u8 index)
 {
 	u16 high,low,bit;
@@ -2920,7 +3117,8 @@ static void __init smdkv210_machine_init(void)
 
 //	s3c_fb_set_platdata(&smdkv210_lcd0_pdata);
 	//OTM8018B_init();
-	OTM8018B_HSD50_RGB_mode();
+	//OTM8018B_HSD50_RGB_mode();
+	Init_5inch();
 	printk("----------------------s3c_fb_set_platdata(&lte480wv_fb_data)------------------------------\n");
 	s3c_fb_set_platdata(&lte480wv_fb_data);
 
