@@ -1167,12 +1167,15 @@ ft5x0x_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
     fts_ctpm_auto_upg();
 #endif    
 
+printk("%s, Line %d\n", __FILE__, __LINE__);
+
+
 #if CFG_SUPPORT_UPDATE_PROJECT_SETTING
     fts_ctpm_update_project_setting();
 #endif
-
+printk("%s, Line %d\n", __FILE__, __LINE__);
     enable_irq(IRQ_EINT(6));
-
+printk("%s, Line %d\n", __FILE__, __LINE__);
 	printk("[FTS] ==probe over =\n");
     return 0;
 
@@ -1252,11 +1255,21 @@ static int __init ft5x0x_ts_init(void)
 {
 	int ret;
 	printk("==ft5x0x_ts_init==\n");
+	
+	//GTP_GPIO_REQUEST(GTP_INT_PORT, "GTP_INT_IRQ");
+	//GTP_GPIO_AS_INT(GTP_INT_PORT);	
+	
+	//GTP_GPIO_REQUEST(GTP_RST_PORT, "GTP_RST_PORT");
+	
+	//GTP_GPIO_OUTPUT(GTP_RST_PORT,1);
+	//msleep(10);
 
 	GTP_GPIO_OUTPUT(GTP_RST_PORT, 0);
 	msleep(10);
 
 	GTP_GPIO_OUTPUT(GTP_RST_PORT,1);
+	
+	GTP_GPIO_AS_INT(GTP_INT_PORT);
 
 	ret = i2c_add_driver(&ft5x0x_ts_driver);
 	printk("ret=%d\n",ret);
