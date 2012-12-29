@@ -50,3 +50,9 @@ arch/arm/kernel/asm-offsets.s
 drivers/tty/vt/consolemap_deftbl.c
 drivers/tty/vt/defkeymap.c
 #drivers/video/logo/clut_vga16.c
+*.*.old
+*.rej
+*.orig
+*.*.rej
+*.*.orig
+scripts/kconfig/mconf

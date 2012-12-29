@@ -28,13 +28,13 @@
 #include <linux/freezer.h>
 #include "mma8452.h"
 
-#if 0
+#if 1
 #define mmaprintk(x...) printk(x)
 #else
 #define mmaprintk(x...)
 #endif
 
-#if 0
+#if 1
 #define mmaprintkd(x...) printk(x)
 #else
 #define mmaprintkd(x...)
@@ -133,18 +133,48 @@ err:
 
 static int mma8452_rx_data(struct i2c_client *client, char *rxData, int length)
 {
-	int ret = 0;
-	char reg = rxData[0];
-	ret = i2c_smbus_write_i2c_block_data(client, reg, length, rxData);
-	return (ret > 0)? 0 : ret;
+	int ret;
+
+	struct i2c_msg msgs[] = {
+		{
+			.addr	= client->addr,
+			.flags	= 0,
+			.len	= 1,
+			.buf	= rxData,
+		},
+		{
+			.addr	= client->addr,
+			.flags	= I2C_M_RD,
+			.len	= length,
+			.buf	= rxData,
+		},
+	};
+
+	ret = i2c_transfer(client->adapter, msgs, 2);
+	if (ret < 0)
+		pr_err("msg %s i2c read error: %d\n", __func__, ret);
+	
+	return ret;
 }
 
 static int mma8452_tx_data(struct i2c_client *client, char *txData, int length)
 {
-	int ret = 0;
-	char reg = txData[0];
-	ret = i2c_smbus_write_i2c_block_data(client, reg, length-1, &txData[1]);
-	return (ret > 0)? 0 : ret;
+	int ret;
+
+	struct i2c_msg msg[] = {
+		{
+			.addr	= client->addr,
+			.flags	= 0,
+			.len	= length,
+			.buf	= txData,
+		},
+	};
+
+	ret = i2c_transfer(client->adapter, msg, 1);
+	if (ret < 0)
+		pr_err("%s i2c write error: %d\n", __func__, ret);
+
+	return ret;
 }
 
 static char mma845x_read_reg(struct i2c_client *client,int addr)
@@ -681,19 +711,15 @@ static int mma8452_init_client(struct i2c_client *client)
 		return ret;
     }
 	s3c_gpio_setpull(client->irq, S3C_GPIO_PULL_NONE);
-#if 1
-	irq = gpio_to_irq(client->irq);
-#else
 	s3c_gpio_cfgpin(client->irq, S3C_GPIO_SFN(0xF));//as int
-#endif
-	ret = request_irq(irq, mma8452_interrupt, IRQF_TRIGGER_LOW, client->dev.driver->name, mma8452);
+	client->irq = gpio_to_irq(client->irq);
+	ret = request_irq(client->irq, mma8452_interrupt, IRQF_TRIGGER_LOW, client->dev.driver->name, mma8452);
 	mmaprintk("request irq is %d,ret is  0x%x\n",irq,ret);
 	if (ret ) {
 		gpio_free(client->irq);
 		mmaprintk(KERN_ERR "mma8452_init_client: request irq failed,ret is %d\n",ret);
         return ret;
 	}
-	client->irq = irq;
 	disable_irq(client->irq);
 	init_waitqueue_head(&data_ready_wq);
  
@@ -733,6 +759,7 @@ static int  mma8452_probe(struct i2c_client *client, const struct i2c_device_id 
 	i2c_set_clientdata(client, mma8452);
 
 	this_client = client;
+	printk("%s----addr:0x%x\n",__FUNCTION__,client->addr);
 
 	devid = mma8452_get_devid(this_client);
 	if ((MMA8452_DEVID != devid) 
@@ -794,7 +821,7 @@ static int  mma8452_probe(struct i2c_client *client, const struct i2c_device_id 
 	}
 
 	printk(KERN_INFO "mma8452 probe ok\n");
-#if  0	
+#if  1	
 //	mma8452_start_test(this_client);
 	mma8452_start(client, MMA8452_RATE_12P5);
 #endif

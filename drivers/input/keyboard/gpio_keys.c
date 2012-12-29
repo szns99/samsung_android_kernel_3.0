@@ -324,6 +324,7 @@ static void gpio_keys_report_event(struct gpio_button_data *bdata)
 	unsigned int type = button->type ?: EV_KEY;
 	int state = (gpio_get_value_cansleep(button->gpio) ? 1 : 0) ^ button->active_low;
 
+	printk("%s------------line:%d,state=%d\n",__FUNCTION__,__LINE__,state);
 	if (type == EV_ABS) {
 		if (state)
 			input_event(input, type, button->code, button->value);
@@ -338,6 +339,7 @@ static void gpio_keys_work_func(struct work_struct *work)
 	struct gpio_button_data *bdata =
 		container_of(work, struct gpio_button_data, work);
 
+	printk("%s------------line:%d\n",__FUNCTION__,__LINE__);
 	gpio_keys_report_event(bdata);
 }
 
@@ -360,7 +362,7 @@ static irqreturn_t gpio_keys_isr(int irq, void *dev_id)
 			jiffies + msecs_to_jiffies(bdata->timer_debounce));
 	else
 		schedule_work(&bdata->work);
-
+	printk("%s------------line:%d\n",__FUNCTION__,__LINE__);
 	return IRQ_HANDLED;
 }
 
@@ -391,6 +393,8 @@ static int __devinit gpio_keys_setup_key(struct platform_device *pdev,
 		goto fail3;
 	}
 
+	s3c_gpio_setpull(button->gpio, S3C_GPIO_PULL_NONE);
+	s3c_gpio_cfgpin(button->gpio, S3C_GPIO_SFN(0xF));
 	if (button->debounce_interval) {
 		error = gpio_set_debounce(button->gpio,
 					  button->debounce_interval * 1000);
