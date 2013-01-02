@@ -54,7 +54,9 @@
 #undef	CAM_ITU_CH_B
 #define	CAM_ITU_CH_A
 #endif
-
+#ifdef CONFIG_MT8630
+#include <linux/mt8630.h>
+#endif
 #include <plat/regs-serial.h>
 #include <plat/regs-srom.h>
 #include <plat/gpio-cfg.h>
@@ -461,6 +463,35 @@ static struct platform_device s3c_device_gpio_button = {
   .platform_data = &gpio_button_data
  }  
 };  
+#endif
+
+#if defined(CONFIG_MT8630)
+static int mt8630_io_init(void)
+{
+	return 0;
+}
+
+static int mt8630_io_deinit(void)
+{
+	
+	return 0;
+}
+ 
+struct s5p_mt8630_data s5p_mt8630_info = {
+	.io_init = mt8630_io_init,
+  	.io_deinit = mt8630_io_deinit,
+	.modem_power_en = S5PV210_GPH3(3),
+	.bp_power = S5PV210_GPH3(2),
+	.bp_reset = S5PV210_GPH3(1),
+	.irq = S5PV210_GPH0(3),
+};
+struct platform_device s5p_device_mt8630 = {	
+        .name = "mt8630",	
+    	.id = -1,	
+	.dev = {
+	.platform_data = &s5p_mt8630_info,
+	}    	
+    };
 #endif
 
 static struct resource smdkv210_dm9000_resources[] = {

@@ -39,55 +39,29 @@ static struct wake_lock modem_wakelock;
 #define MT8630_RESET 0x01
 struct s5p_mt8630_data *gpdata = NULL;
 struct class *modem_class = NULL; 
-static int do_wakeup_irq = 0;
 static int modem_status;
-static void ap_wakeup_bp(struct platform_device *pdev, int wake)
-{
-	struct s5p_mt8630_data *pdata = pdev->dev.platform_data;
- 
-	  gpio_set_value(pdata->modem_usb_en,wake);
-	  if(wake == 1)
-		  wake = 0;
-	  else
-		  wake = 1;
-	  gpio_set_value(pdata->modem_uart_en,wake);
-
-}
-static void do_wakeup(struct work_struct *work)
-{
-		gpio_set_value(gpdata->ap_ready,GPIO_HIGH);
-		gpio_set_value(gpdata->modem_usb_en,GPIO_HIGH);
-}
-
-static DECLARE_DELAYED_WORK(wakeup_work, do_wakeup);
-static irqreturn_t detect_irq_handler(int irq, void *dev_id)
-{
-    if(do_wakeup_irq)
-    {
-        do_wakeup_irq = 0;
-        wake_lock_timeout(&modem_wakelock, 10 * HZ);
-        //schedule_delayed_work(&wakeup_work, 2*HZ);
-    }
-    return IRQ_HANDLED;
-}
 int modem_poweron_off(int on_off)
 {
 	struct s5p_mt8630_data *pdata = gpdata;		
   if(on_off)
   {
+		gpio_set_value(pdata->bp_reset, GPIO_HIGH);
+		msleep(100);
+		gpio_set_value(pdata->bp_reset, GPIO_LOW);
 		gpio_set_value(pdata->bp_power, GPIO_LOW);
-		gpio_set_value(pdata->modem_usb_en, GPIO_HIGH);
-		gpio_set_value(pdata->modem_uart_en, GPIO_LOW);
-		gpio_set_value(pdata->ap_ready, GPIO_HIGH);
-          
+		msleep(1000);
+		gpio_set_value(pdata->bp_power, GPIO_HIGH);
+		msleep(2000);
+		gpio_set_value(pdata->bp_power, GPIO_LOW);
   }
   else
   {
+		gpio_set_value(pdata->bp_power, GPIO_LOW);
 		gpio_set_value(pdata->bp_power, GPIO_HIGH);
-		gpio_set_value(pdata->modem_usb_en, GPIO_LOW);
-		gpio_set_value(pdata->modem_uart_en, GPIO_HIGH);
-		gpio_set_value(pdata->ap_ready, GPIO_LOW);
+		msleep(2500);
+		gpio_set_value(pdata->bp_power, GPIO_LOW);
   }
+
   return 0;
 }
 static int mt8630_open(struct inode *inode, struct file *file)
@@ -111,26 +85,20 @@ static ssize_t mt8630_write(struct file *file, const char __user *buf,size_t len
 	printk(" received cmd = %c\n",cmd[0]);
 	if (cmd[0] == '0')
 	{
-		gpio_set_value(gpdata->ap_ready, GPIO_LOW);
 	}	
 	if (cmd[0] == '1')
 	{
-		gpio_set_value(gpdata->ap_ready, GPIO_HIGH);
 	}
 	if (cmd[0] == '2')
 	{
-		gpio_set_value(gpdata->modem_uart_en, GPIO_LOW);
 	}
 	if (cmd[0] == '3')
 	{
-		gpio_set_value(gpdata->modem_uart_en, GPIO_HIGH);
 	}
 	if (cmd[0] == '4')
 	{
-		gpio_set_value(gpdata->modem_usb_en, GPIO_HIGH);
 	}if (cmd[0] == '5')
 	{
-		gpio_set_value(gpdata->modem_usb_en, GPIO_LOW);
 	}
 	return len;
 }
@@ -216,50 +184,20 @@ static int mt8630_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, mt8630_data);	
 	result = gpio_request(pdata->modem_power_en,"modem_power_en");
 	if(result){
-			printk("failed to request modem_power_en gpio\n");
-			goto err1;
-		}
+		printk("failed to request modem_power_en gpio\n");
+		goto err1;
+	}
 	gpio_set_value(pdata->modem_power_en, GPIO_HIGH);
-	msleep(1000);
-  result = gpio_request(pdata->bp_power,"modem_power");
-  if(result){
+	msleep(2000);
+  	result = gpio_request(pdata->bp_power,"modem_power");
+  	if(result){
   		printk("failed to request modem_power gpio\n");
-			goto err2;
+		goto err2;
   	}
-  result = gpio_request(pdata->modem_usb_en, "modem_usb_en");
-	if (result) {
-		printk("failed to request modem_usb_en gpio\n");
+	result = gpio_request(pdata->bp_reset, "bp_reset");
+	if (result < 0) {
+		printk("failed to request bp_reset gpio\n");	
 		goto err3;
-	}	
-	result = gpio_request(pdata->modem_uart_en,"modem_uart_en");
-	if(result){
-			printk("failed to request modem_uart_en gpio\n");
-			goto err4;
-	}
-	result = gpio_request(pdata->bp_wakeup_ap, "bp_wakeup_ap");
-	if (result) {
-			printk("failed to request bp_wakeup_ap gpio\n");
-			goto err5;
-	}
-	gpio_direction_input(pdata->bp_wakeup_ap);
-	irq	= gpio_to_irq(pdata->bp_wakeup_ap);
-	if(irq < 0)
-	{
-		gpio_free(pdata->bp_wakeup_ap);
-		printk("failed to request bp_wakeup_ap\n");
-	}
-	result = request_irq(irq, detect_irq_handler, IRQ_BB_WAKEUP_AP_TRIGGER, "bp_wakeup_ap", NULL);
-	if (result < 0) {
-		printk("%s: request_irq(%d) failed\n", __func__, irq);
-		gpio_free(pdata->bp_wakeup_ap);
-		goto err5;
-	}
-	enable_irq_wake(irq);
-	wake_lock_init(&modem_wakelock, WAKE_LOCK_SUSPEND, "bp_wakeup_ap");
-	result = gpio_request(pdata->ap_ready, "ap_ready");
-	if (result < 0) {
-		printk("failed to request ap_ready gpio\n");	
-		goto err6;
 	}
 
 	modem_poweron_off(1);
@@ -278,28 +216,17 @@ err1:
 err2:
 	gpio_free(pdata->bp_power);
 err3:
-	gpio_free(pdata->modem_usb_en);
-err4:
-	gpio_free(pdata->modem_uart_en);
-err5:
-	gpio_free(pdata->bp_wakeup_ap);
-err6:
-	gpio_free(pdata->ap_ready);
+	gpio_free(pdata->bp_reset);
 	return 0;
 }
 
 int mt8630_suspend(struct platform_device *pdev, pm_message_t state)
 {
-	do_wakeup_irq = 1;
-	ap_wakeup_bp(pdev, 0);
-	gpio_set_value(gpdata->ap_ready,0);
 	return 0;
 }
 
 int mt8630_resume(struct platform_device *pdev)
 {
-	gpio_set_value(gpdata->modem_uart_en,GPIO_LOW);
-	schedule_delayed_work(&wakeup_work, 2*HZ);
 	return 0;
 }
 
@@ -312,12 +239,9 @@ void mt8630_shutdown(struct platform_device *pdev)
 
 	if(pdata->io_deinit)
 		pdata->io_deinit();
-	cancel_work_sync(&mt8630_data->work);
 	gpio_free(pdata->modem_power_en);
 	gpio_free(pdata->bp_power);
-	gpio_free(pdata->modem_usb_en);
-	gpio_free(pdata->modem_uart_en);
-	gpio_free(pdata->bp_wakeup_ap);
+	gpio_free(pdata->bp_reset);
 	kfree(mt8630_data);
 }
 

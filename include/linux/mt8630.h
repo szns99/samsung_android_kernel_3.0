@@ -9,17 +9,14 @@ struct modem_dev
 	struct work_struct work;
 };
 
-struct mt8630_data {
+struct s5p_mt8630_data {
 	struct device *dev;
 	int (*io_init)(void);
 	int (*io_deinit)(void);
 	unsigned int bp_power;
 	unsigned int bp_reset;
-	unsigned int bp_wakeup_ap;
-	unsigned int modem_usb_en;
-	unsigned int modem_uart_en;
 	unsigned int modem_power_en;
-	unsigned int ap_ready;
+	unsigned int irq;
 };
 
 #define MODEM_NAME "mt8630"
