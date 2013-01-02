@@ -1,0 +1,17 @@
+#
+# 3G device configuration
+#
+
+menuconfig 3G_MODULE
+	tristate "3G module for phonepad"
+	---help---
+	  Say Y here if you have a support modem
+
+choice
+	depends on 3G_MODULE
+	prompt  "Select 3G Module"
+
+    config MT8630
+    	bool "MT8630"
+endchoice
+
