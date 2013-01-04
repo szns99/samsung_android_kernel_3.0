@@ -46,7 +46,7 @@ module_param(debug, int, S_IRUGO|S_IWUSR);
 #include <linux/earlysuspend.h>
 #endif
 
-//#define TOUCHKEY_ON_SCREEN
+#define TOUCHKEY_ON_SCREEN
 //#define TOUCH_KEY_LED  INVALID_GPIO
 static unsigned char g_vid;
 
@@ -65,8 +65,8 @@ uint16_t down_table	= 0;
 uint16_t up_table	= ~0;
 #endif
 
-#define SCREEN_MAX_X    1024
-#define SCREEN_MAX_Y    600
+#define SCREEN_MAX_X    480
+#define SCREEN_MAX_Y    800
 #define PRESS_MAX       255
 
 #define FT5X0X_NAME	"ft5x0x_ts" 
@@ -581,7 +581,7 @@ static int g_screen_key=0;
 
 static unsigned char initkey_code[] =
 {
-    KEY_BACK,  KEY_HOMEPAGE, KEY_MENU
+    KEY_MENU,  KEY_HOMEPAGE, KEY_BACK, KEY_SEARCH
 };
 
 typedef struct {
@@ -595,10 +595,10 @@ static int get_screen_key(int x, int y)
 	const int span = 10;
 	int idx;
 	rect rt[] = {
-		{829,	79, 	KEY_BACK},   
-		{829,	47,	KEY_HOMEPAGE},        /* home */ 
-		{829,	0,	KEY_MENU},      	  /* menu */ 
-		{0,0,0}, 
+		{60,	850, 	KEY_MENU},   
+		{210,	850,	KEY_HOMEPAGE},        /* home */ 
+		{360,	850,	KEY_BACK},      	  /* menu */ 
+		{470,	850,	KEY_SEARCH}, 
 	}; 
 	for(idx=0; rt[idx].keycode; idx++)
 	{
@@ -855,7 +855,7 @@ static void ft5x0x_report_value(void)
 	        continue;
 		//RK29TP_DG("%d,  cc111111_touch_key(%d,%d)\n",event->point[i].id, event->point[i].x, event->point[i].y);
 		down_table |= 1 << event->point[i].id;
-		/*if (event->point[i].x >= 810)  
+		if (event->point[i].y >= 810)  
 		{
 			if(debug1)
 			{
@@ -872,7 +872,7 @@ static void ft5x0x_report_value(void)
 #endif
 			}	
 		}
-		} else*/ 
+		} else
 		{
 			sx = event->point[i].x;//(1792 - event->point[i].y) * 800 / 1792;
 			sy = event->point[i].y;//(576 - (event->point[i].x - 288)) * 480 / 576;
@@ -1127,7 +1127,7 @@ ft5x0x_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	input_dev->id.vendor = 0xDEAD;
 	input_dev->id.product = 0xBEEF;
 	input_dev->id.version = 10427;	//screen firmware version
-#if 0//def TOUCHKEY_ON_SCREEN
+#ifdef TOUCHKEY_ON_SCREEN
 	#ifdef TOUCH_KEY_LED
 		err = gpio_request(TOUCH_KEY_LED, "key led");
 		if (err < 0) {
