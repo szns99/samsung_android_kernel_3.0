@@ -2186,7 +2186,7 @@ void Init_5inch(void)
 	NT35582_Write_Reg(0xE50F); NT35582_Write_Data(0xAE);
 	NT35582_Write_Reg(0xE510); NT35582_Write_Data(0x4A);
 	NT35582_Write_Reg(0xE511); NT35582_Write_Data(0x4D);
-	NT35582_Write_Reg(0x3600); NT35582_Write_Data(0x00);
+	NT35582_Write_Reg(0x3600); NT35582_Write_Data(0x03);
 	NT35582_Write_Reg(0x3a00); NT35582_Write_Data(0x77);
 	NT35582_Write_Reg(0x3B00); NT35582_Write_Data(0x0B);
 	NT35582_Write_Reg(0x0C00); NT35582_Write_Data(0x60);
