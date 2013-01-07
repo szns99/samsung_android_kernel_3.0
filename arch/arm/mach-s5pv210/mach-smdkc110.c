@@ -1267,6 +1267,9 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 #ifdef CONFIG_KEYBOARD_GPIO
 	&s3c_device_gpio_button,
 #endif
+#if defined(CONFIG_MT8630)
+	&s5p_device_mt8630,
+#endif
 #ifdef CONFIG_TOUCHSCREEN_EGALAX
 	&s3c_device_i2c5,
 #endif
@@ -3276,7 +3279,25 @@ static void __init smdkv210_machine_init(void)
         smdkv210_ehci_init();
         smdkv210_ohci_init();
         clk_xusbxti.rate = 24000000;
-	 smdkc110_setup_clocks(); 
+	smdkc110_setup_clocks(); 
+	
+	if (!gpio_request(S5PV210_GPJ4(4), "WIFI_PWR")) {
+	    gpio_direction_output(S5PV210_GPJ4(4), 1);
+	    s3c_gpio_cfgpin(S5PV210_GPJ4(4), S3C_GPIO_SFN(0));
+	    s3c_gpio_setpull(S5PV210_GPJ4(4), S3C_GPIO_PULL_NONE);
+	}
+	if (!gpio_request(S5PV210_GPJ4(3), "WIFI_PDN")) {
+	    gpio_direction_output(S5PV210_GPJ4(3), 1);
+	    s3c_gpio_cfgpin(S5PV210_GPJ4(3), S3C_GPIO_SFN(0));
+	    s3c_gpio_setpull(S5PV210_GPJ4(3), S3C_GPIO_PULL_NONE);
+	}
+	if (!gpio_request(S5PV210_GPJ4(2), "WIFI_RST")) {
+	    gpio_direction_output(S5PV210_GPJ4(2), 1);
+	    s3c_gpio_cfgpin(S5PV210_GPJ4(2), S3C_GPIO_SFN(0));
+	    s3c_gpio_setpull(S5PV210_GPJ4(2), S3C_GPIO_PULL_NONE);
+	    msleep(100);
+	    gpio_direction_output(S5PV210_GPJ4(2),1);
+	}
 }
 
 MACHINE_START(SMDKC110, "SMDKC110")

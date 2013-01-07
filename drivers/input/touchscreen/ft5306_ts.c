@@ -93,7 +93,7 @@ enum ft5x0x_ts_regs {
 #define ABS_MT_BLOB_ID		  0x38	/* Group set of pkts as blob */
 #endif /* ABS_MT_TOUCH_MAJOR */
 
-static int debug1=0;
+static int debug1=1;
 module_param(debug1, int, S_IRUGO|S_IWUSR);
 
 static struct mutex ft_mutex;
@@ -602,12 +602,12 @@ static int get_screen_key(int x, int y)
 	}; 
 	for(idx=0; rt[idx].keycode; idx++)
 	{
-		RK29TP_DG("***x1=%d, y1=%d\n", rt[idx].x, rt[idx].y);
+		//printk("***x1=%d, y1=%d\n", rt[idx].x, rt[idx].y);
 		if(x >= rt[idx].x-span && x<= rt[idx].x+span)
 			if(y >= rt[idx].y-span && y<= rt[idx].y+span)
 				return rt[idx].keycode;
 	}
-	RK29TP_DG("***x=%d, y=%d\n", x, y);
+	//printk("***x=%d, y=%d\n", x, y);
 	return 0;
 }
 
@@ -816,7 +816,7 @@ static void ft5x0x_report_value(void)
 
 
     static int been_to_screen[MAX_CONTACTS] = {0};
-#if 1
+#if 0
 	printk("point is %d x0 is %d y0 is %d\n",   
 			//P1 status is %x ID1 is %x x1 is 0x%x y1 is 0x%x\n\n",
 					event->touch_point,  
@@ -863,10 +863,10 @@ static void ft5x0x_report_value(void)
 				{
 				s_screen_key[event->point[i].id] = 1;
 #ifdef TOUCHKEY_ON_SCREEN
-				RK29TP_DG("%d,  cc_touch_key(%d,%d)\n",event->point[i].id, event->point[i].x, event->point[i].y);
+				//printk("%d,  cc_touch_key(%d,%d)\n",event->point[i].id, event->point[i].x, event->point[i].y);
 				if (g_screen_key = get_screen_key(event->point[i].x, event->point[i].y)) 
 				{
-					RK29TP_DG("touch key = %x down\n", g_screen_key);
+					//printk("touch key = %x down\n", g_screen_key);
 					report_screen_key(1);
 				}
 #endif
@@ -907,7 +907,7 @@ static void ft5x0x_report_value(void)
 				{
 					s_screen_key[i] = 0;
 #ifdef TOUCHKEY_ON_SCREEN
-					RK29TP_DG("touch key up!\n");
+					printk("touch key up!\n");
 					report_screen_key(0);
 #endif          			
             			}

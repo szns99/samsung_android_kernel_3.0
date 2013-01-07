@@ -11,7 +11,7 @@
 #include <linux/circ_buf.h>
 #include <linux/interrupt.h>
 #include <linux/miscdevice.h>
-#include <mach/iomux.h>
+//#include <mach/iomux.h>
 #include <mach/gpio.h>
 #include <asm/gpio.h>
 #include <linux/delay.h>
@@ -45,21 +45,25 @@ int modem_poweron_off(int on_off)
 	struct s5p_mt8630_data *pdata = gpdata;		
   if(on_off)
   {
-		gpio_set_value(pdata->bp_reset, GPIO_HIGH);
+		gpio_set_value(pdata->bp_reset, 1);
 		msleep(100);
-		gpio_set_value(pdata->bp_reset, GPIO_LOW);
-		gpio_set_value(pdata->bp_power, GPIO_LOW);
+		gpio_set_value(pdata->bp_reset, 0);
+		msleep(500);
+		gpio_set_value(pdata->bp_power, 0);
 		msleep(1000);
-		gpio_set_value(pdata->bp_power, GPIO_HIGH);
+		gpio_set_value(pdata->bp_power, 1);
 		msleep(2000);
-		gpio_set_value(pdata->bp_power, GPIO_LOW);
+		gpio_set_value(pdata->bp_power, 0);
+		printk("3g modem power on\n");
   }
   else
   {
-		gpio_set_value(pdata->bp_power, GPIO_LOW);
-		gpio_set_value(pdata->bp_power, GPIO_HIGH);
+		gpio_set_value(pdata->bp_power, 0);
+		msleep(1000);
+		gpio_set_value(pdata->bp_power, 1);
 		msleep(2500);
-		gpio_set_value(pdata->bp_power, GPIO_LOW);
+		gpio_set_value(pdata->bp_power, 0);
+		printk("3g modem power off\n");
   }
 
   return 0;
@@ -136,21 +140,17 @@ static struct miscdevice mt8630_misc = {
 	.name = MODEM_NAME,
 	.fops = &mt8630_fops
 };
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37))
+//#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37))
 static ssize_t modem_status_read(struct class *cls, struct class_attribute *attr, char *_buf)
-#else
-static ssize_t modem_status_read(struct class *cls, char *_buf)
-#endif
+//#else
+//static ssize_t modem_status_read(struct class *cls, char *_buf)
+//#endif
 {
 
 	return sprintf(_buf, "%d\n", modem_status);
 	
 }
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37))
 static ssize_t modem_status_write(struct class *cls, struct class_attribute *attr, const char *_buf, size_t _count)
-#else
-static ssize_t modem_status_write(struct class *cls, const char *_buf, size_t _count)
-#endif
 {
     int new_state = simple_strtoul(_buf, NULL, 16);
    if(new_state == modem_status) return _count;
@@ -175,6 +175,7 @@ static int mt8630_probe(struct platform_device *pdev)
 	pdata->dev = &pdev->dev;
 	if(pdata->io_init)
 		pdata->io_init();
+	printk("mc8630 probe.....................\n");
 	mt8630_data = kzalloc(sizeof(struct modem_dev), GFP_KERNEL);
 	if(mt8630_data == NULL)
 	{
@@ -187,18 +188,26 @@ static int mt8630_probe(struct platform_device *pdev)
 		printk("failed to request modem_power_en gpio\n");
 		goto err1;
 	}
-	gpio_set_value(pdata->modem_power_en, GPIO_HIGH);
+  s3c_gpio_cfgpin(pdata->modem_power_en, S3C_GPIO_SFN(0));
+  s3c_gpio_setpull(pdata->modem_power_en, S3C_GPIO_PULL_NONE);
+  gpio_direction_output(pdata->modem_power_en, 1);
 	msleep(2000);
-  	result = gpio_request(pdata->bp_power,"modem_power");
-  	if(result){
-  		printk("failed to request modem_power gpio\n");
-		goto err2;
-  	}
+	result = gpio_request(pdata->bp_power,"modem_power");
+	if(result){
+		printk("failed to request modem_power gpio\n");
+	goto err2;
+	}
+  s3c_gpio_cfgpin(pdata->bp_power, S3C_GPIO_SFN(0));
+  s3c_gpio_setpull(pdata->bp_power, S3C_GPIO_PULL_NONE);
+  gpio_direction_output(pdata->bp_power, 1);
 	result = gpio_request(pdata->bp_reset, "bp_reset");
 	if (result < 0) {
 		printk("failed to request bp_reset gpio\n");	
 		goto err3;
 	}
+  s3c_gpio_cfgpin(pdata->bp_reset, S3C_GPIO_SFN(0));
+  s3c_gpio_setpull(pdata->bp_reset, S3C_GPIO_PULL_NONE);
+  gpio_direction_output(pdata->bp_reset, 1);
 
 	modem_poweron_off(1);
 	modem_status = 1;
