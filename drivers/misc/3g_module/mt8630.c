@@ -73,7 +73,7 @@ static int mt8630_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int mu509_release(struct inode *inode, struct file *file)
+static int mt8630_release(struct inode *inode, struct file *file)
 {
 	return 0;
 }
