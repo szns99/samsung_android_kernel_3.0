@@ -1267,12 +1267,11 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 #ifdef CONFIG_KEYBOARD_GPIO
 	&s3c_device_gpio_button,
 #endif
-#if defined(CONFIG_MT8630)
-	&s5p_device_mt8630,
-#endif
 #ifdef CONFIG_TOUCHSCREEN_EGALAX
 	&s3c_device_i2c5,
 #endif
+        &s5p_device_ehci,
+        &s5p_device_ohci,
 	&s3c_device_rtc,
 	&s3c_device_ts,
 	&s3c_device_wdt,
@@ -1285,11 +1284,6 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 	&smdkv210_lcd_lte480wv,
 	&s3c_device_timer[3],
 	&smdkv210_backlight_device,
-	&s5p_device_ehci,
-	&s5p_device_ohci,
-#ifdef CONFIG_USB_GADGET
-	&s3c_device_usbgadget,
-#endif
 #ifdef CONFIG_VIDEO_FIMC
         &s3c_device_fimc0,
         &s3c_device_fimc1,
@@ -1333,6 +1327,9 @@ static struct platform_device *smdkv210_devices[] __initdata = {
         &s5p_device_tvout,
         &s5p_device_cec,
         &s5p_device_hpd,
+#endif
+#if defined(CONFIG_MT8630)
+	&s5p_device_mt8630,
 #endif
 };
 /*

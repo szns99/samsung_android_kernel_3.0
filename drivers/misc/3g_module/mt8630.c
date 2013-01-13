@@ -48,7 +48,6 @@ int modem_poweron_off(int on_off)
 		gpio_set_value(pdata->bp_reset, 1);
 		msleep(100);
 		gpio_set_value(pdata->bp_reset, 0);
-		msleep(500);
 		gpio_set_value(pdata->bp_power, 0);
 		msleep(1000);
 		gpio_set_value(pdata->bp_power, 1);
@@ -59,7 +58,6 @@ int modem_poweron_off(int on_off)
   else
   {
 		gpio_set_value(pdata->bp_power, 0);
-		msleep(1000);
 		gpio_set_value(pdata->bp_power, 1);
 		msleep(2500);
 		gpio_set_value(pdata->bp_power, 0);
@@ -74,39 +72,8 @@ static int mt8630_open(struct inode *inode, struct file *file)
 	device_init_wakeup(pdata->dev, 1);
 	return 0;
 }
-static ssize_t mt8630_write(struct file *file, const char __user *buf,size_t len, loff_t *off)
-{
-	static char cmd[2];
-	int ret = 0;
-	if (len > 2) 
-	{
-		return -EINVAL;
-	}
-	ret = copy_from_user(&cmd, buf, len);
-	if (ret != 0) {
-		return -EFAULT;
-	}
-	printk(" received cmd = %c\n",cmd[0]);
-	if (cmd[0] == '0')
-	{
-	}	
-	if (cmd[0] == '1')
-	{
-	}
-	if (cmd[0] == '2')
-	{
-	}
-	if (cmd[0] == '3')
-	{
-	}
-	if (cmd[0] == '4')
-	{
-	}if (cmd[0] == '5')
-	{
-	}
-	return len;
-}
-static int mt8630_release(struct inode *inode, struct file *file)
+
+static int mu509_release(struct inode *inode, struct file *file)
 {
 	return 0;
 }
@@ -117,9 +84,15 @@ static long mt8630_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	switch(cmd)
 	{
 		case MT8630_RESET:					
-			modem_poweron_off(0);
-			msleep(10);
-			modem_poweron_off(1);
+			gpio_set_value(pdata->bp_reset, 1);
+			msleep(100);
+			gpio_set_value(pdata->bp_reset, 0);
+			msleep(100);
+			gpio_set_value(pdata->bp_power, 0);
+			msleep(1000);
+			gpio_set_value(pdata->bp_power, 1);
+			msleep(2000);
+			gpio_set_value(pdata->bp_power, 0);
 			break;
 		default:
 			break;
@@ -130,7 +103,6 @@ static long mt8630_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 static struct file_operations mt8630_fops = {
 	.owner = THIS_MODULE,
 	.open = mt8630_open,
-	.write = mt8630_write,
 	.release = mt8630_release,
 	.unlocked_ioctl = mt8630_ioctl
 };
@@ -140,11 +112,7 @@ static struct miscdevice mt8630_misc = {
 	.name = MODEM_NAME,
 	.fops = &mt8630_fops
 };
-//#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 37))
 static ssize_t modem_status_read(struct class *cls, struct class_attribute *attr, char *_buf)
-//#else
-//static ssize_t modem_status_read(struct class *cls, char *_buf)
-//#endif
 {
 
 	return sprintf(_buf, "%d\n", modem_status);
@@ -172,45 +140,46 @@ static int mt8630_probe(struct platform_device *pdev)
 	struct s5p_mt8630_data *pdata = gpdata = pdev->dev.platform_data;
 	struct modem_dev *mt8630_data = NULL;
 	int result, irq = 0;	
+	
 	pdata->dev = &pdev->dev;
 	if(pdata->io_init)
 		pdata->io_init();
-	printk("mc8630 probe.....................\n");
-	mt8630_data = kzalloc(sizeof(struct modem_dev), GFP_KERNEL);
-	if(mt8630_data == NULL)
-	{
-		printk("failed to request mt8630_data\n");
-		goto err0;
-	}
-	platform_set_drvdata(pdev, mt8630_data);	
 	result = gpio_request(pdata->modem_power_en,"modem_power_en");
 	if(result){
 		printk("failed to request modem_power_en gpio\n");
-		goto err1;
+		goto err0;
 	}
   s3c_gpio_cfgpin(pdata->modem_power_en, S3C_GPIO_SFN(0));
   s3c_gpio_setpull(pdata->modem_power_en, S3C_GPIO_PULL_NONE);
   gpio_direction_output(pdata->modem_power_en, 1);
-	msleep(2000);
 	result = gpio_request(pdata->bp_power,"modem_power");
 	if(result){
 		printk("failed to request modem_power gpio\n");
-	goto err2;
+	goto err1;
 	}
   s3c_gpio_cfgpin(pdata->bp_power, S3C_GPIO_SFN(0));
   s3c_gpio_setpull(pdata->bp_power, S3C_GPIO_PULL_NONE);
-  gpio_direction_output(pdata->bp_power, 1);
+  gpio_direction_output(pdata->bp_power, 0);
 	result = gpio_request(pdata->bp_reset, "bp_reset");
 	if (result < 0) {
 		printk("failed to request bp_reset gpio\n");	
-		goto err3;
+		goto err2;
 	}
   s3c_gpio_cfgpin(pdata->bp_reset, S3C_GPIO_SFN(0));
   s3c_gpio_setpull(pdata->bp_reset, S3C_GPIO_PULL_NONE);
   gpio_direction_output(pdata->bp_reset, 1);
 
+	msleep(1000);
 	modem_poweron_off(1);
 	modem_status = 1;
+	
+	mt8630_data = kzalloc(sizeof(struct modem_dev), GFP_KERNEL);
+	if(mt8630_data == NULL)
+	{
+		printk("failed to request mt8630_data\n");
+		goto err3;
+	}
+	platform_set_drvdata(pdev, mt8630_data);		
 	 
 	result = misc_register(&mt8630_misc);
 	if(result)
@@ -219,13 +188,13 @@ static int mt8630_probe(struct platform_device *pdev)
 	}	
 	return result;
 err0:
-	kfree(mt8630_data);
-err1:
 	gpio_free(pdata->modem_power_en);
-err2:
+err1:
 	gpio_free(pdata->bp_power);
-err3:
+err2:
 	gpio_free(pdata->bp_reset);
+err3:
+	kfree(mt8630_data);
 	return 0;
 }
 
