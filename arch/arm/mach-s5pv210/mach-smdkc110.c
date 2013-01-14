@@ -1272,6 +1272,9 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 #endif
         &s5p_device_ehci,
         &s5p_device_ohci,
+#ifdef CONFIG_USB_GADGET
+	&s3c_device_usbgadget,
+#endif
 	&s3c_device_rtc,
 	&s3c_device_ts,
 	&s3c_device_wdt,
@@ -1284,6 +1287,12 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 	&smdkv210_lcd_lte480wv,
 	&s3c_device_timer[3],
 	&smdkv210_backlight_device,
+//        &s5p_device_ehci,
+//        &s5p_device_ohci,
+//#ifdef CONFIG_USB_GADGET
+//	&s3c_device_usbgadget,
+//#endif
+
 #ifdef CONFIG_VIDEO_FIMC
         &s3c_device_fimc0,
         &s3c_device_fimc1,

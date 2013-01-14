@@ -45,13 +45,14 @@ int modem_poweron_off(int on_off)
 	struct s5p_mt8630_data *pdata = gpdata;		
   if(on_off)
   {
-		gpio_set_value(pdata->bp_reset, 1);
-		msleep(100);
-		gpio_set_value(pdata->bp_reset, 0);
+		gpio_set_value(pdata->modem_power_en, 1);
+		//gpio_set_value(pdata->bp_reset, 1);
+		//msleep(100);
+		//gpio_set_value(pdata->bp_reset, 0);
 		gpio_set_value(pdata->bp_power, 0);
 		msleep(1000);
 		gpio_set_value(pdata->bp_power, 1);
-		msleep(2000);
+		msleep(1800);
 		gpio_set_value(pdata->bp_power, 0);
 		printk("3g modem power on\n");
   }
@@ -59,8 +60,10 @@ int modem_poweron_off(int on_off)
   {
 		gpio_set_value(pdata->bp_power, 0);
 		gpio_set_value(pdata->bp_power, 1);
-		msleep(2500);
+		msleep(2000);
 		gpio_set_value(pdata->bp_power, 0);
+		msleep(1000);
+		gpio_set_value(pdata->modem_power_en, 0);
 		printk("3g modem power off\n");
   }
 
@@ -167,9 +170,9 @@ static int mt8630_probe(struct platform_device *pdev)
 	}
   s3c_gpio_cfgpin(pdata->bp_reset, S3C_GPIO_SFN(0));
   s3c_gpio_setpull(pdata->bp_reset, S3C_GPIO_PULL_NONE);
-  gpio_direction_output(pdata->bp_reset, 1);
+  gpio_direction_output(pdata->bp_reset, 0);
 
-	msleep(1000);
+	//msleep(3000);
 	modem_poweron_off(1);
 	modem_status = 1;
 	
