@@ -42,6 +42,7 @@
 #include <mach/regs-clock.h>
 #include <mach/spi-clocks.h>
 #include <mach/regs-fb.h>
+#include <linux/pwm.h>
 
 #ifdef CONFIG_VIDEO_S5K4BA
 #include <media/s5k4ba_platform.h>
@@ -1077,9 +1078,41 @@ static struct s3c_platform_fb lte480wv_fb_data __initdata = {
         .backlight_onoff    = lte480wv_backlight_off,
         .reset_lcd      = lte480wv_reset_lcd,
 };
+
+static struct pwm_device *ir_led_pwm;
+
+static void ir_led_pwm_init(void)
+{
+	int err;
+	err = gpio_request(S5PV210_GPD0(2), "GPIO_IR_LED");
+
+	if (err) 
+	{
+		return;
+	}
+
+	gpio_direction_output(S5PV210_GPD0(2), 1);
+
+	s3c_gpio_cfgpin(S5PV210_GPD0(2), S5PV210_GPD_0_2_TOUT_2);
+
+	gpio_free(S5PV210_GPD0(2));
+
+	ir_led_pwm = pwm_request(2, "IR LED PWM");
+	
+	if (IS_ERR(ir_led_pwm))
+		printk("-----------------Unable to request PWM for IR LED!------------------------\n");
+	else
+	{
+		pwm_config(ir_led_pwm, 26316 / 2, 26316);
+		pwm_enable(ir_led_pwm);
+	}
+}
+
 static int smdkv210_backlight_init(struct device *dev)
 {
 	int ret;
+
+	ir_led_pwm_init();
 	//need to check the calling function for this function and remove the call.
 	return 0;
 
@@ -1285,6 +1318,7 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 	//&samsung_device_keypad,
 	//&smdkv210_dm9000,
 	&smdkv210_lcd_lte480wv,
+	&s3c_device_timer[2],
 	&s3c_device_timer[3],
 	&smdkv210_backlight_device,
 //        &s5p_device_ehci,
@@ -1717,6 +1751,12 @@ static struct i2c_board_info smdkv210_i2c_devs1[] __initdata = {
                 I2C_BOARD_INFO("s5p_ddc", (0x74>>1)),
         },
 #endif	
+#ifdef CONFIG_SOC_CAMERA_OV5640
+  {
+      .type           = "OV5640",
+      .addr           = 0x78>>1,
+  },
+#endif
 };
 
 #ifdef CONFIG_KP_AXP20
@@ -3188,6 +3228,62 @@ void OTM8018B_HSD50_RGB_mode(void)
 }
 #endif
 
+struct class *sec_class;
+EXPORT_SYMBOL(sec_class);
+
+#define GPIO_GPS_POWER_CTRL S5PV210_GPJ3(4)
+#define GPIO_GPS_nRST S5PV210_GPJ3(5)
+#define GPIO_GPS_PWR_EN S5PV210_GPJ3(6)
+
+#define GPIO_GPS_RXD S5PV210_GPA0(0)
+
+static void gps_gpio_init(void)
+{
+	int err;
+	struct device *gps_dev;
+	sec_class = class_create(THIS_MODULE, "sec");
+
+	gps_dev = device_create(sec_class, NULL, 0, NULL, "gps");
+	if (IS_ERR(gps_dev)) {
+		pr_err("Failed to create device(gps)!\n");
+		goto err;
+	}
+
+	err = gpio_request(GPIO_GPS_POWER_CTRL, "GPIO_GPS_POWER_CTRL");
+	if (err)
+	{
+		printk(KERN_ERR "failed to request GPJ3(4) for GPIO_GPS_POWER_CTRL\n");
+	}
+	else
+	{
+		s3c_gpio_cfgpin(GPIO_GPS_POWER_CTRL, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(GPIO_GPS_POWER_CTRL, S3C_GPIO_PULL_NONE);
+		gpio_direction_output(GPIO_GPS_POWER_CTRL, 1);
+	}
+
+	mdelay(10);
+
+	gpio_request(GPIO_GPS_nRST, "GPS_nRST");
+	s3c_gpio_setpull(GPIO_GPS_nRST, S3C_GPIO_PULL_NONE);
+	s3c_gpio_cfgpin(GPIO_GPS_nRST, S3C_GPIO_OUTPUT);
+	gpio_direction_output(GPIO_GPS_nRST, 1);
+
+	gpio_request(GPIO_GPS_PWR_EN, "GPS_PWR_EN");
+	s3c_gpio_setpull(GPIO_GPS_PWR_EN, S3C_GPIO_PULL_NONE);
+	s3c_gpio_cfgpin(GPIO_GPS_PWR_EN, S3C_GPIO_OUTPUT);
+	gpio_direction_output(GPIO_GPS_PWR_EN, 1);
+
+	s3c_gpio_setpull(GPIO_GPS_RXD, S3C_GPIO_PULL_UP);
+	gpio_export(GPIO_GPS_nRST, 1);
+	gpio_export(GPIO_GPS_PWR_EN, 1);
+
+	gpio_export_link(gps_dev, "GPS_nRST", GPIO_GPS_nRST);
+	gpio_export_link(gps_dev, "GPS_PWR_EN", GPIO_GPS_PWR_EN);
+
+ err:
+	return;
+}
+
 static void __init smdkv210_machine_init(void)
 {
 	s3c_pm_init();
@@ -3199,6 +3295,24 @@ static void __init smdkv210_machine_init(void)
         android_pmem_set_platdata();
 #endif
 
+	if (!gpio_request(S5PV210_GPJ3(1), "CAM_PWDN")) {
+	    gpio_direction_output(S5PV210_GPJ2(1), 1);
+	    s3c_gpio_cfgpin(S5PV210_GPJ3(1), S3C_GPIO_SFN(0));
+	    s3c_gpio_setpull(S5PV210_GPJ3(1), S3C_GPIO_PULL_NONE);
+	}
+	if (!gpio_request(S5PV210_GPJ3(3), "CAM_EN")) {
+	    gpio_direction_output(S5PV210_GPJ3(3), 1);
+	    s3c_gpio_cfgpin(S5PV210_GPJ3(3), S3C_GPIO_SFN(0));
+	    s3c_gpio_setpull(S5PV210_GPJ3(3), S3C_GPIO_PULL_NONE);
+	}
+	if (!gpio_request(S5PV210_GPJ3(2), "CAM_RST")) {
+	    gpio_direction_output(S5PV210_GPJ3(2), 1);
+	    s3c_gpio_cfgpin(S5PV210_GPJ3(2), S3C_GPIO_SFN(0));
+	    s3c_gpio_setpull(S5PV210_GPJ3(2), S3C_GPIO_PULL_NONE);
+	    msleep(100);
+	    gpio_direction_output(S5PV210_GPJ3(2),1);
+	    msleep(100);
+	}
 	//samsung_keypad_set_platdata(&smdkv210_keypad_data);
 	//s3c24xx_ts_set_platdata(&s3c_ts_platform);
 
@@ -3221,7 +3335,6 @@ static void __init smdkv210_machine_init(void)
 	//OTM8018B_init();
 	//OTM8018B_HSD50_RGB_mode();
 	Init_5inch();
-	printk("----------------------s3c_fb_set_platdata(&lte480wv_fb_data)------------------------------\n");
 	s3c_fb_set_platdata(&lte480wv_fb_data);
 
 #ifdef CONFIG_S3C_DEV_HSMMC
@@ -3286,6 +3399,8 @@ static void __init smdkv210_machine_init(void)
         smdkv210_ohci_init();
         clk_xusbxti.rate = 24000000;
 	smdkc110_setup_clocks(); 
+	
+	gps_gpio_init();
 	
 	if (!gpio_request(S5PV210_GPJ4(4), "WIFI_PWR")) {
 	    gpio_direction_output(S5PV210_GPJ4(4), 1);
