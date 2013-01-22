@@ -42,6 +42,7 @@
 #include <mach/regs-clock.h>
 #include <mach/spi-clocks.h>
 #include <mach/regs-fb.h>
+#include <linux/pwm.h>
 
 #ifdef CONFIG_VIDEO_S5K4BA
 #include <media/s5k4ba_platform.h>
@@ -1077,9 +1078,41 @@ static struct s3c_platform_fb lte480wv_fb_data __initdata = {
         .backlight_onoff    = lte480wv_backlight_off,
         .reset_lcd      = lte480wv_reset_lcd,
 };
+
+static struct pwm_device *ir_led_pwm;
+
+static void ir_led_pwm_init(void)
+{
+	int err;
+	err = gpio_request(S5PV210_GPD0(2), "GPIO_IR_LED");
+
+	if (err) 
+	{
+		return;
+	}
+
+	gpio_direction_output(S5PV210_GPD0(2), 1);
+
+	s3c_gpio_cfgpin(S5PV210_GPD0(2), S5PV210_GPD_0_2_TOUT_2);
+
+	gpio_free(S5PV210_GPD0(2));
+
+	ir_led_pwm = pwm_request(2, "IR LED PWM");
+	
+	if (IS_ERR(ir_led_pwm))
+		printk("-----------------Unable to request PWM for IR LED!------------------------\n");
+	else
+	{
+		pwm_config(ir_led_pwm, 26316 / 2, 26316);
+		pwm_enable(ir_led_pwm);
+	}
+}
+
 static int smdkv210_backlight_init(struct device *dev)
 {
 	int ret;
+
+	ir_led_pwm_init();
 	//need to check the calling function for this function and remove the call.
 	return 0;
 
@@ -1280,6 +1313,7 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 	//&samsung_device_keypad,
 	//&smdkv210_dm9000,
 	&smdkv210_lcd_lte480wv,
+	&s3c_device_timer[2],
 	&s3c_device_timer[3],
 	&smdkv210_backlight_device,
 	&s5p_device_ehci,
