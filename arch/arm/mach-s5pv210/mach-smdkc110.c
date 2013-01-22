@@ -1270,11 +1270,6 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 #ifdef CONFIG_TOUCHSCREEN_EGALAX
 	&s3c_device_i2c5,
 #endif
-        &s5p_device_ehci,
-        &s5p_device_ohci,
-#ifdef CONFIG_USB_GADGET
-	&s3c_device_usbgadget,
-#endif
 	&s3c_device_rtc,
 	&s3c_device_ts,
 	&s3c_device_wdt,
@@ -1287,12 +1282,11 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 	&smdkv210_lcd_lte480wv,
 	&s3c_device_timer[3],
 	&smdkv210_backlight_device,
-//        &s5p_device_ehci,
-//        &s5p_device_ohci,
-//#ifdef CONFIG_USB_GADGET
-//	&s3c_device_usbgadget,
-//#endif
-
+	&s5p_device_ehci,
+	&s5p_device_ohci,
+#ifdef CONFIG_USB_GADGET
+	&s3c_device_usbgadget,
+#endif
 #ifdef CONFIG_VIDEO_FIMC
         &s3c_device_fimc0,
         &s3c_device_fimc1,
@@ -3188,6 +3182,62 @@ void OTM8018B_HSD50_RGB_mode(void)
 }
 #endif
 
+struct class *sec_class;
+EXPORT_SYMBOL(sec_class);
+
+#define GPIO_GPS_POWER_CTRL S5PV210_GPJ3(4)
+#define GPIO_GPS_nRST S5PV210_GPJ3(5)
+#define GPIO_GPS_PWR_EN S5PV210_GPJ3(6)
+
+#define GPIO_GPS_RXD S5PV210_GPA0(0)
+
+static void gps_gpio_init(void)
+{
+	int err;
+	struct device *gps_dev;
+	sec_class = class_create(THIS_MODULE, "sec");
+
+	gps_dev = device_create(sec_class, NULL, 0, NULL, "gps");
+	if (IS_ERR(gps_dev)) {
+		pr_err("Failed to create device(gps)!\n");
+		goto err;
+	}
+
+	err = gpio_request(GPIO_GPS_POWER_CTRL, "GPIO_GPS_POWER_CTRL");
+	if (err)
+	{
+		printk(KERN_ERR "failed to request GPJ3(4) for GPIO_GPS_POWER_CTRL\n");
+	}
+	else
+	{
+		s3c_gpio_cfgpin(GPIO_GPS_POWER_CTRL, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(GPIO_GPS_POWER_CTRL, S3C_GPIO_PULL_NONE);
+		gpio_direction_output(GPIO_GPS_POWER_CTRL, 1);
+	}
+
+	mdelay(10);
+
+	gpio_request(GPIO_GPS_nRST, "GPS_nRST");
+	s3c_gpio_setpull(GPIO_GPS_nRST, S3C_GPIO_PULL_NONE);
+	s3c_gpio_cfgpin(GPIO_GPS_nRST, S3C_GPIO_OUTPUT);
+	gpio_direction_output(GPIO_GPS_nRST, 1);
+
+	gpio_request(GPIO_GPS_PWR_EN, "GPS_PWR_EN");
+	s3c_gpio_setpull(GPIO_GPS_PWR_EN, S3C_GPIO_PULL_NONE);
+	s3c_gpio_cfgpin(GPIO_GPS_PWR_EN, S3C_GPIO_OUTPUT);
+	gpio_direction_output(GPIO_GPS_PWR_EN, 1);
+
+	s3c_gpio_setpull(GPIO_GPS_RXD, S3C_GPIO_PULL_UP);
+	gpio_export(GPIO_GPS_nRST, 1);
+	gpio_export(GPIO_GPS_PWR_EN, 1);
+
+	gpio_export_link(gps_dev, "GPS_nRST", GPIO_GPS_nRST);
+	gpio_export_link(gps_dev, "GPS_PWR_EN", GPIO_GPS_PWR_EN);
+
+ err:
+	return;
+}
+
 static void __init smdkv210_machine_init(void)
 {
 	s3c_pm_init();
@@ -3221,7 +3271,6 @@ static void __init smdkv210_machine_init(void)
 	//OTM8018B_init();
 	//OTM8018B_HSD50_RGB_mode();
 	Init_5inch();
-	printk("----------------------s3c_fb_set_platdata(&lte480wv_fb_data)------------------------------\n");
 	s3c_fb_set_platdata(&lte480wv_fb_data);
 
 #ifdef CONFIG_S3C_DEV_HSMMC
@@ -3286,6 +3335,8 @@ static void __init smdkv210_machine_init(void)
         smdkv210_ohci_init();
         clk_xusbxti.rate = 24000000;
 	smdkc110_setup_clocks(); 
+	
+	gps_gpio_init();
 	
 	if (!gpio_request(S5PV210_GPJ4(4), "WIFI_PWR")) {
 	    gpio_direction_output(S5PV210_GPJ4(4), 1);
