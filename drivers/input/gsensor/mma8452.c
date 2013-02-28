@@ -26,7 +26,8 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/freezer.h>
-#include "mma8452.h"
+#include <linux/mma8452.h>
+#include <linux/sensor-dev.h>
 
 #if 1
 #define mmaprintk(x...) printk(x)
@@ -154,12 +155,12 @@ static int mma8452_rx_data(struct i2c_client *client, char *rxData, int length)
 	if (ret < 0)
 		pr_err("msg %s i2c read error: %d\n", __func__, ret);
 	
-	return ret;
+	return (ret > 0)? 0 : ret;
 }
 
 static int mma8452_tx_data(struct i2c_client *client, char *txData, int length)
 {
-	int ret;
+	int ret = 0;
 
 	struct i2c_msg msg[] = {
 		{
@@ -174,7 +175,7 @@ static int mma8452_tx_data(struct i2c_client *client, char *txData, int length)
 	if (ret < 0)
 		pr_err("%s i2c write error: %d\n", __func__, ret);
 
-	return ret;
+	return (ret > 0)? 0 : ret;
 }
 
 static char mma845x_read_reg(struct i2c_client *client,int addr)
@@ -448,9 +449,12 @@ static int mma8452_get_data(struct i2c_client *client)
             return ret;
     } while (0);
 
-	x = mma8452_convert_to_int(buffer[0],buffer[1]);
-	y = mma8452_convert_to_int(buffer[2],buffer[3]);
-	z = mma8452_convert_to_int(buffer[4],buffer[5]);
+	//x = mma8452_convert_to_int(buffer[0],buffer[1]);
+	//y = mma8452_convert_to_int(buffer[2],buffer[3]);
+	//z = mma8452_convert_to_int(buffer[4],buffer[5]);
+	x = -mma8452_convert_to_int(buffer[0],buffer[1]);
+	z = mma8452_convert_to_int(buffer[2],buffer[3]);
+	y = -mma8452_convert_to_int(buffer[4],buffer[5]);
 
 	if (pdata->swap_xyz) {
 		axis.x = (pdata->orientation[0])*x + (pdata->orientation[1])*y + (pdata->orientation[2])*z;
@@ -469,7 +473,7 @@ static int mma8452_get_data(struct i2c_client *client)
              swap(axis.x,axis.y); 
 	}
 	
-    mmaprintkd( "%s: ------------------mma8452_GetData axis = %d  %d  %d--------------\n",
+    mmaprintkd( "%s: ------------------mma8452_GetData axis = %03d  %03d  %03d--------------\n",
             __func__, axis.x, axis.y, axis.z); 
      
     //memcpy(sense_data, &axis, sizeof(axis));
@@ -710,16 +714,19 @@ static int mma8452_init_client(struct i2c_client *client)
 		gpio_free(client->irq);
 		return ret;
     }
-	s3c_gpio_setpull(client->irq, S3C_GPIO_PULL_NONE);
+	s3c_gpio_setpull(client->irq, S3C_GPIO_PULL_UP);
+	msleep(10);
 	s3c_gpio_cfgpin(client->irq, S3C_GPIO_SFN(0xF));//as int
-	client->irq = gpio_to_irq(client->irq);
-	ret = request_irq(client->irq, mma8452_interrupt, IRQF_TRIGGER_LOW, client->dev.driver->name, mma8452);
+	irq = gpio_to_irq(client->irq);
+	ret = request_irq(irq, mma8452_interrupt, IRQF_TRIGGER_LOW/*IRQF_TRIGGER_LOW*/, client->dev.driver->name, mma8452);
+	//ret = request_any_context_irq(irq, mma8452_interrupt, IRQF_TRIGGER_LOW, client->dev.driver->name, mma8452);
 	mmaprintk("request irq is %d,ret is  0x%x\n",irq,ret);
 	if (ret ) {
 		gpio_free(client->irq);
 		mmaprintk(KERN_ERR "mma8452_init_client: request irq failed,ret is %d\n",ret);
         return ret;
 	}
+	client->irq = irq;
 	disable_irq(client->irq);
 	init_waitqueue_head(&data_ready_wq);
  
@@ -729,7 +736,7 @@ static int mma8452_init_client(struct i2c_client *client)
 static int  mma8452_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
 	struct mma8452_data *mma8452;
-	struct gsensor_platform_data *pdata = pdata = client->dev.platform_data;
+	struct sensor_platform_data *pdata = pdata = client->dev.platform_data;
 	int err;
 
 	mmaprintkf("%s enter\n",__FUNCTION__);
@@ -821,7 +828,7 @@ static int  mma8452_probe(struct i2c_client *client, const struct i2c_device_id 
 	}
 
 	printk(KERN_INFO "mma8452 probe ok\n");
-#if  1	
+#if  0	
 //	mma8452_start_test(this_client);
 	mma8452_start(client, MMA8452_RATE_12P5);
 #endif
