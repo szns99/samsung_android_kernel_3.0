@@ -43,6 +43,7 @@
 #include <mach/spi-clocks.h>
 #include <mach/regs-fb.h>
 #include <linux/pwm.h>
+#include <plat/regs-fimc.h>
 
 #ifdef CONFIG_VIDEO_OV5640
 #include <media/ovsensor_platform.h>
@@ -1152,14 +1153,45 @@ static int back_cam_power_en(int onoff)
 {
 	int err;
 	/* Camera A */
-	err = gpio_request(GPIO_PS_VOUT, "GPH0");
-	if (err)
-		printk(KERN_ERR "failed to request GPH0 for CAM_2V8\n");
-
-	s3c_gpio_setpull(GPIO_PS_VOUT, S3C_GPIO_PULL_NONE);
-	gpio_direction_output(GPIO_PS_VOUT, 0);
-	gpio_direction_output(GPIO_PS_VOUT, 1);
-	gpio_free(GPIO_PS_VOUT);
+	if (onoff)
+	{
+		if (!gpio_request(S5PV210_GPJ3(1), "CAM_PWDN")) {
+		    gpio_direction_output(S5PV210_GPJ2(1), 0);
+		    s3c_gpio_cfgpin(S5PV210_GPJ3(1), S3C_GPIO_SFN(0));
+		    s3c_gpio_setpull(S5PV210_GPJ3(1), S3C_GPIO_PULL_NONE);
+		    gpio_free(S5PV210_GPJ3(1));
+		}
+		if (!gpio_request(S5PV210_GPJ3(3), "CAM_EN")) {
+		    gpio_direction_output(S5PV210_GPJ3(3), 1);
+		    s3c_gpio_cfgpin(S5PV210_GPJ3(3), S3C_GPIO_SFN(0));
+		    s3c_gpio_setpull(S5PV210_GPJ3(3), S3C_GPIO_PULL_NONE);
+		    gpio_free(S5PV210_GPJ3(3));
+		}
+		if (!gpio_request(S5PV210_GPJ3(2), "CAM_RST")) {
+		    gpio_direction_output(S5PV210_GPJ3(2), 1);
+		    s3c_gpio_cfgpin(S5PV210_GPJ3(2), S3C_GPIO_SFN(0));
+		    s3c_gpio_setpull(S5PV210_GPJ3(2), S3C_GPIO_PULL_NONE);
+		    msleep(100);
+		    gpio_direction_output(S5PV210_GPJ3(2),1);
+		    msleep(100);
+		    gpio_free(S5PV210_GPJ3(2));
+		}
+	}
+	else
+	{
+		if (!gpio_request(S5PV210_GPJ3(1), "CAM_PWDN")) {
+		    gpio_direction_output(S5PV210_GPJ2(1), 0);
+		    s3c_gpio_cfgpin(S5PV210_GPJ3(1), S3C_GPIO_SFN(0));
+		    s3c_gpio_setpull(S5PV210_GPJ3(1), S3C_GPIO_PULL_NONE);
+		    gpio_free(S5PV210_GPJ3(1));
+		}
+		if (!gpio_request(S5PV210_GPJ3(3), "CAM_EN")) {
+		    gpio_direction_output(S5PV210_GPJ3(3), 0);
+		    s3c_gpio_cfgpin(S5PV210_GPJ3(3), S3C_GPIO_SFN(0));
+		    s3c_gpio_setpull(S5PV210_GPJ3(3), S3C_GPIO_PULL_NONE);
+		    gpio_free(S5PV210_GPJ3(3));
+		}
+	}
 	return 0;
 }
 
@@ -3025,7 +3057,8 @@ static void __init smdkv210_machine_init(void)
 	smdkc110_setup_clocks(); 
 	
 	gps_gpio_init();
-	
+	s3c_gpio_cfgpin(S5PV210_GPE1(3), S5PV210_GPE1_3_CAM_A_CLKOUT);
+
 	/*
 	if (!gpio_request(S5PV210_GPJ4(4), "WIFI_PWR")) {
 	    gpio_direction_output(S5PV210_GPJ4(4), 1);
