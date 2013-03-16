@@ -1075,7 +1075,7 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 #ifdef CONFIG_USB_GADGET
 	&s3c_device_usbgadget,
 #endif
-	&s3c_device_rtc,
+	//&s3c_device_rtc,
 	&s3c_device_ts,
 	&s3c_device_wdt,
 	&s5pv210_device_ac97,
@@ -1437,7 +1437,7 @@ static struct i2c_board_info smdkv210_i2c_devs2[] __initdata = {
 		.type           = "rtc_s35392a",
 		.addr           = 0x30,
 		.flags          = 0,
-		.irq            = S5PV210_GPH2(5),
+		.irq            = S5PV210_GPH1(4),
 	},
  #endif
 #if defined (CONFIG_GS_MMA7660)

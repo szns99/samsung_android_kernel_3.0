@@ -121,7 +121,7 @@ config MACH_SMDKC110
 	select CPU_S5PV210
 	select S3C_DEV_I2C1
 	select S3C_DEV_I2C2
-	select S3C_DEV_RTC
+#	select S3C_DEV_RTC
 	select S3C_DEV_WDT
 	select S5P_DEV_ONENAND
 	select SAMSUNG_DEV_IDE
@@ -146,7 +146,7 @@ config MACH_SMDKV210
 	#select S3C_DEV_HSMMC3 if !S5PV210_SD_CH2_8BIT
 	select S3C_DEV_I2C1
 	select S3C_DEV_I2C2
-	select S3C_DEV_RTC
+	#select S3C_DEV_RTC
 	select S3C_DEV_WDT
 	select S3C64XX_DEV_SPI
 	select SAMSUNG_DEV_ADC
@@ -179,7 +179,7 @@ config MACH_SMDKC110
 	#select S3C_DEV_HSMMC3 if !S5PV210_SD_CH2_8BIT
 	select S3C_DEV_I2C1
 	select S3C_DEV_I2C2
-	select S3C_DEV_RTC
+#	select S3C_DEV_RTC
 	select S3C_DEV_WDT
 	select S3C64XX_DEV_SPI
 	select SAMSUNG_DEV_ADC
