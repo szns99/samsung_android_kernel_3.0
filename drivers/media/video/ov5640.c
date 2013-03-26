@@ -555,11 +555,11 @@ printk("%s\n", __func__);
 	/* Registering subdev */
 	v4l2_i2c_subdev_init(sd, client, &ov5640_ops);
 	
-//	ret = ov5640_detect(client);
-//	if (ret) {
-//		dev_info(&client->dev, "ov5640 sensor not found\n");
-//		goto err;
-//	}
+	ret = ov5640_detect(client);
+	if (ret) {
+		dev_info(&client->dev, "ov5640 sensor not found\n");
+		goto err;
+	}
 
 	dev_info(&client->dev, "OV5640 has been probed\n");
 	return 0;

@@ -52,7 +52,7 @@ int modem_poweron_off(int on_off)
 		gpio_set_value(pdata->bp_power, 0);
 		msleep(1000);
 		gpio_set_value(pdata->bp_power, 1);
-		msleep(1800);
+		msleep(3000);
 		gpio_set_value(pdata->bp_power, 0);
 		printk("3g modem power on\n");
   }
