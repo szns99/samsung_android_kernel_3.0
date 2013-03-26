@@ -45,12 +45,29 @@
 #include <linux/pwm.h>
 #include <plat/regs-fimc.h>
 
-#ifdef CONFIG_VIDEO_OV5640
-#include <media/ovsensor_platform.h>
+#ifdef CONFIG_VIDEO_S5K4BA
+#include <media/s5k4ba_platform.h>
 #undef	CAM_ITU_CH_B
 #define	CAM_ITU_CH_A
 #endif
 
+#ifdef CONFIG_VIDEO_HM5065
+#include <media/hm5065_platform.h>
+#undef	CAM_ITU_CH_B
+#define	CAM_ITU_CH_A
+#endif
+
+#ifdef CONFIG_SOC_CAMERA_OV5640
+#include <media/ov5640_platform.h>
+#undef	CAM_ITU_CH_B
+#define	CAM_ITU_CH_A
+#endif
+
+#ifdef CONFIG_VIDEO_SAA7113
+#include <media/saa7113_platform.h>
+#undef	CAM_ITU_CH_B
+#define	CAM_ITU_CH_A
+#endif
 #ifdef CONFIG_MT8630
 #include <linux/mt8630.h>
 #endif
@@ -1149,64 +1166,35 @@ static struct platform_device *smdkv210_devices[] __initdata = {
  * This function also called at fimc_init_camera()
  * Do optimization for cameras on your platform.
 */
-static int back_cam_power_en(int onoff)
+#ifdef CAM_ITU_CH_A
+static int smdkv210_cam0_power(int onoff)
 {
 	int err;
 	/* Camera A */
-	if (onoff)
-	{
-		if (!gpio_request(S5PV210_GPJ3(1), "CAM_PWDN")) {
-		    gpio_direction_output(S5PV210_GPJ2(1), 0);
-		    s3c_gpio_cfgpin(S5PV210_GPJ3(1), S3C_GPIO_SFN(0));
-		    s3c_gpio_setpull(S5PV210_GPJ3(1), S3C_GPIO_PULL_NONE);
-		    gpio_free(S5PV210_GPJ3(1));
-		}
-		if (!gpio_request(S5PV210_GPJ3(3), "CAM_EN")) {
-		    gpio_direction_output(S5PV210_GPJ3(3), 1);
-		    s3c_gpio_cfgpin(S5PV210_GPJ3(3), S3C_GPIO_SFN(0));
-		    s3c_gpio_setpull(S5PV210_GPJ3(3), S3C_GPIO_PULL_NONE);
-		    gpio_free(S5PV210_GPJ3(3));
-		}
-		if (!gpio_request(S5PV210_GPJ3(2), "CAM_RST")) {
-		    gpio_direction_output(S5PV210_GPJ3(2), 1);
-		    s3c_gpio_cfgpin(S5PV210_GPJ3(2), S3C_GPIO_SFN(0));
-		    s3c_gpio_setpull(S5PV210_GPJ3(2), S3C_GPIO_PULL_NONE);
-		    msleep(100);
-		    gpio_direction_output(S5PV210_GPJ3(2),1);
-		    msleep(100);
-		    gpio_free(S5PV210_GPJ3(2));
-		}
-	}
-	else
-	{
-		if (!gpio_request(S5PV210_GPJ3(1), "CAM_PWDN")) {
-		    gpio_direction_output(S5PV210_GPJ2(1), 0);
-		    s3c_gpio_cfgpin(S5PV210_GPJ3(1), S3C_GPIO_SFN(0));
-		    s3c_gpio_setpull(S5PV210_GPJ3(1), S3C_GPIO_PULL_NONE);
-		    gpio_free(S5PV210_GPJ3(1));
-		}
-		if (!gpio_request(S5PV210_GPJ3(3), "CAM_EN")) {
-		    gpio_direction_output(S5PV210_GPJ3(3), 0);
-		    s3c_gpio_cfgpin(S5PV210_GPJ3(3), S3C_GPIO_SFN(0));
-		    s3c_gpio_setpull(S5PV210_GPJ3(3), S3C_GPIO_PULL_NONE);
-		    gpio_free(S5PV210_GPJ3(3));
-		}
-	}
+	err = gpio_request(GPIO_PS_VOUT, "GPH0");
+	if (err)
+		printk(KERN_ERR "failed to request GPH0 for CAM_2V8\n");
+
+	s3c_gpio_setpull(GPIO_PS_VOUT, S3C_GPIO_PULL_NONE);
+	gpio_direction_output(GPIO_PS_VOUT, 0);
+	gpio_direction_output(GPIO_PS_VOUT, 1);
+	gpio_free(GPIO_PS_VOUT);
+
 	return 0;
 }
-
-/* S/W workaround for the SMDK_CAM4_type board
- * When SMDK_CAM4 type module is initialized at power reset,
- * it needs the cam_mclk.
- *
- * Now cam_mclk is set as below, need only set the gpio mux.
- * CAM_SRC1 = 0x0006000, CLK_DIV1 = 0x00070400.
- * cam_mclk source is SCLKMPLL, and divider value is 8.
-*/
-static int front_cam_power_en(int onoff)
+#else
+static int smdkv210_cam1_power(int onoff)
 {
 	int err;
 
+	/* S/W workaround for the SMDK_CAM4_type board
+	 * When SMDK_CAM4 type module is initialized at power reset,
+	 * it needs the cam_mclk.
+	 *
+	 * Now cam_mclk is set as below, need only set the gpio mux.
+	 * CAM_SRC1 = 0x0006000, CLK_DIV1 = 0x00070400.
+	 * cam_mclk source is SCLKMPLL, and divider value is 8.
+	*/
 
 	/* gpio mux select the cam_mclk */
 	err = gpio_request(GPIO_PS_ON, "GPJ1");
@@ -1242,23 +1230,455 @@ static int front_cam_power_en(int onoff)
 
 	return 0;
 }
+#endif
 
-#ifdef CONFIG_VIDEO_OV5640
-static struct ov5640_platform_data ov5640_plat = {
+static int s5k5ba_power_en(int onoff)
+{
+	if (onoff) {
+#ifdef CAM_ITU_CH_A
+		smdkv210_cam0_power(onoff);
+#else
+		smdkv210_cam1_power(onoff);
+#endif
+	} else {
+#ifdef CAM_ITU_CH_A
+		smdkv210_cam0_power(onoff);
+#else
+		smdkv210_cam1_power(onoff);
+#endif
+	}
+
+	return 0;
+}
+
+static int ov5640_power_en(int onoff)
+{
+		if (onoff) {
+#ifdef CAM_ITU_CH_A
+		smdkv210_cam0_power(onoff);
+#else
+		smdkv210_cam1_power(onoff);
+#endif
+	} else {
+#ifdef CAM_ITU_CH_A
+		smdkv210_cam0_power(onoff);
+#else
+		smdkv210_cam1_power(onoff);
+#endif
+	}
+
+	return 0;
+}
+
+static void ov5640_init(void)
+{
+	int err;
+
+	err = gpio_request(CAMERA_POWER_PIN, "CAMERA_POWER_PIN");
+	if (err)
+	{
+		printk(KERN_ERR "failed to request GPJ3(3) for CAMERA_POWER_PIN\n");
+	}
+	else
+	{
+		s3c_gpio_cfgpin(CAMERA_POWER_PIN, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(CAMERA_POWER_PIN, S3C_GPIO_PULL_NONE);
+		gpio_direction_output(CAMERA_POWER_PIN, 1);
+	}
+
+	err = gpio_request(CAMERA_PDN_PIN, "CAMERA_POWER_PIN");
+	if (err)
+	{
+		printk(KERN_ERR "failed to request GPJ3(1) for CAMERA_PDN_PIN\n");
+	}
+	else
+	{
+		s3c_gpio_cfgpin(CAMERA_PDN_PIN, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(CAMERA_PDN_PIN, S3C_GPIO_PULL_NONE);
+		gpio_direction_output(CAMERA_PDN_PIN, 0);
+	}
+
+	err = gpio_request(CAMERA_RESET_PIN, "CAMERA_RESET_PIN");
+	if (err)
+	{
+		printk(KERN_ERR "failed to request GPJ3(2) for CAMERA_RESET_PIN\n");
+	}
+	else
+	{
+		s3c_gpio_cfgpin(CAMERA_RESET_PIN, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(CAMERA_RESET_PIN, S3C_GPIO_PULL_NONE);
+		gpio_direction_output(CAMERA_RESET_PIN, 1);
+	}
+
+	ov5640_power_en(1);
+}
+
+static int hm5065_power_en(int onoff)
+{
+	printk("%s, sharp camera power %s.\n\n",__FUNCTION__, onoff ? "on" : "off");
+
+	if (onoff)
+	{
+		//smdkv210_cam0_power(onoff);
+		//s3c_gpio_setpin(CAMERA_PDN_PIN, 0);
+		//s3c_gpio_cfgpin(CAMERA_PDN_PIN, S3C_GPIO_OUTPUT);
+		gpio_direction_output(CAMERA_PDN_PIN, 0);
+
+		//s3c_gpio_setpin(CAMERA_RESET_PIN, 0);
+		//s3c_gpio_cfgpin(CAMERA_RESET_PIN, S3C_GPIO_OUTPUT);
+		gpio_direction_output(CAMERA_RESET_PIN, 0);
+
+		//s3c_gpio_setpin(CAMERA_POWER_PIN, 1);
+		//s3c_gpio_cfgpin(CAMERA_POWER_PIN, S3C_GPIO_OUTPUT);
+		gpio_direction_output(CAMERA_POWER_PIN, 1);
+		msleep(5);
+
+		//s3c_gpio_setpin(CAMERA_PDN_PIN, 1);
+		gpio_direction_output(CAMERA_PDN_PIN, 1);
+		msleep(50);
+		//s3c_gpio_setpin(CAMERA_RESET_PIN, 1);
+		gpio_direction_output(CAMERA_RESET_PIN, 1);
+		msleep(10);
+	}
+	else 
+	{
+		//smdkv210_cam0_power(onoff);
+		//s3c_gpio_setpin(CAMERA_PDN_PIN, 0);
+		//s3c_gpio_cfgpin(CAMERA_PDN_PIN, S3C_GPIO_OUTPUT);
+		gpio_direction_output(CAMERA_PDN_PIN, 0);
+
+		//s3c_gpio_setpin(CAMERA_RESET_PIN, 0);
+		//s3c_gpio_cfgpin(CAMERA_RESET_PIN, S3C_GPIO_OUTPUT);
+		gpio_direction_output(CAMERA_RESET_PIN, 0);
+
+		//s3c_gpio_setpin(CAMERA_POWER_PIN, 0);
+		//s3c_gpio_cfgpin(CAMERA_POWER_PIN, S3C_GPIO_OUTPUT);
+		gpio_direction_output(CAMERA_POWER_PIN, 0);
+	}
+
+	return 0;
+}
+
+static void hm5065_init(void)
+{
+	int err;
+
+	err = gpio_request(CAMERA_PDN_PIN, "CAMERA_PDN_PIN");
+	if (err)
+	{
+		printk(KERN_ERR "failed to request GPJ3(1) for CAMERA_PDN_PIN\n");
+	}
+	else
+	{
+		s3c_gpio_cfgpin(CAMERA_PDN_PIN, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(CAMERA_PDN_PIN, S3C_GPIO_PULL_NONE);
+		gpio_direction_output(CAMERA_PDN_PIN, 0);
+	}
+
+	err = gpio_request(CAMERA_RESET_PIN, "CAMERA_RESET_PIN");
+	if (err)
+	{
+		printk(KERN_ERR "failed to request GPJ3(2) for CAMERA_RESET_PIN\n");
+	}
+	else
+	{
+		s3c_gpio_cfgpin(CAMERA_RESET_PIN, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(CAMERA_RESET_PIN, S3C_GPIO_PULL_NONE);
+		gpio_direction_output(CAMERA_RESET_PIN, 0);
+	}
+
+
+	err = gpio_request(CAMERA_POWER_PIN, "CAMERA_POWER_PIN");
+	if (err)
+	{
+		printk(KERN_ERR "failed to request GPJ3(3) for CAMERA_POWER_PIN\n");
+	}
+	else
+	{
+		s3c_gpio_cfgpin(CAMERA_POWER_PIN, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(CAMERA_POWER_PIN, S3C_GPIO_PULL_NONE);
+		gpio_direction_output(CAMERA_POWER_PIN, 0);
+	}
+}
+
+#ifdef CONFIG_VIDEO_S5K4EA
+/* Set for MIPI-CSI Camera module Power Enable */
+static int smdkv210_mipi_cam_pwr_en(int enabled)
+{
+	int err;
+
+	err = gpio_request(S5PV210_GPH1(2), "GPH1");
+	if (err)
+		printk(KERN_ERR "#### failed to request(GPH1)for CAM_2V8\n");
+
+	s3c_gpio_setpull(S5PV210_GPH1(2), S3C_GPIO_PULL_NONE);
+	gpio_direction_output(S5PV210_GPH1(2), enabled);
+	gpio_free(S5PV210_GPH1(2));
+
+	return 0;
+}
+
+/* Set for MIPI-CSI Camera module Reset */
+static int smdkv210_mipi_cam_rstn(int enabled)
+{
+	int err;
+
+	err = gpio_request(S5PV210_GPH0(3), "GPH0");
+	if (err)
+		printk(KERN_ERR "#### failed to reset(GPH0) for MIPI CAM\n");
+
+	s3c_gpio_setpull(S5PV210_GPH0(3), S3C_GPIO_PULL_NONE);
+	gpio_direction_output(S5PV210_GPH0(3), enabled);
+	gpio_free(S5PV210_GPH0(3));
+
+	return 0;
+}
+
+/* MIPI-CSI Camera module Power up/down sequence */
+static int smdkv210_mipi_cam_power(int on)
+{
+	if (on) {
+		smdkv210_mipi_cam_pwr_en(1);
+		mdelay(5);
+		smdkv210_mipi_cam_rstn(1);
+	} else {
+		smdkv210_mipi_cam_rstn(0);
+		mdelay(5);
+		smdkv210_mipi_cam_pwr_en(0);
+	}
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_VIDEO_HM5065
+static struct hm5065_platform_data hm5065_plat = {
 	.default_width = 640,
 	.default_height = 480,
+	.pixelformat = V4L2_PIX_FMT_UYVY,
+	.freq = 24000000,
+//	.flash_onoff = flashFor4ecgx,
+//	.af_assist_onoff = flashFor4ecgx,
+//	.torch_onoff = flashFor4ecgx,
+	.is_mipi = 0,
+};
+
+static struct i2c_board_info  hm5065_i2c_info = {
+	I2C_BOARD_INFO("HM5065", 0x3e >> 1),
+	.platform_data = &hm5065_plat,
+};
+
+static struct s3c_platform_camera hm5065 = {
+	#ifdef CAM_ITU_CH_A
+	.id		= CAMERA_PAR_A,
+	#else
+	.id		= CAMERA_PAR_B,
+	#endif
+	.type		= CAM_TYPE_ITU,
+	.fmt		= ITU_601_YCBCR422_8BIT,
+	.order422	= CAM_ORDER422_8BIT_YCBYCR,
+	.i2c_busnum	= 0,
+	.info		= &hm5065_i2c_info,
+	.pixelformat	= V4L2_PIX_FMT_UYVY,
+	.srclk_name	= "mout_mpll",
+	/* .srclk_name	= "xusbxti", */
+	.clk_name	= "sclk_cam1",
+	.clk_rate	= 24000000,
+	.line_length	= 1920,
+	.width		= 640,
+	.height		= 480,
+	.window		= {
+		.left	= 0,
+		.top	= 0,
+		.width	= 640,
+		.height	= 480,
+	},
+
+	/* Polarity */
+	.inv_pclk	= 0,
+	.inv_vsync	= 1,
+	.inv_href	= 0,
+	.inv_hsync	= 0,
+
+	.initialized	= 0,
+	.cam_power	= hm5065_power_en,
+};
+#endif
+
+#ifdef CONFIG_VIDEO_S5K4BA
+static struct s5k4ba_platform_data s5k4ba_plat = {
+	.default_width = 640,
+	.default_height = 480,
+	.pixelformat = V4L2_PIX_FMT_UYVY,
+	.freq = 44000000,
+	.is_mipi = 0,
+};
+
+static struct i2c_board_info  s5k4ba_i2c_info = {
+	I2C_BOARD_INFO("S5K4BA", 0x2d),
+	.platform_data = &s5k4ba_plat,
+};
+
+static struct s3c_platform_camera s5k4ba = {
+	#ifdef CAM_ITU_CH_A
+	.id		= CAMERA_PAR_A,
+	#else
+	.id		= CAMERA_PAR_B,
+	#endif
+	.type		= CAM_TYPE_ITU,
+	.fmt		= ITU_601_YCBCR422_8BIT,
+	.order422	= CAM_ORDER422_8BIT_YCBYCR,
+	.i2c_busnum	= 1,
+	.info		= &s5k4ba_i2c_info,
+	.pixelformat	= V4L2_PIX_FMT_UYVY,
+	.srclk_name	= "mout_mpll",
+	/* .srclk_name	= "xusbxti", */
+	.clk_name	= "sclk_cam1",
+	.clk_rate	= 44000000,
+	.line_length	= 1920,
+	.width		= 640,
+	.height		= 480,
+	.window		= {
+		.left	= 0,
+		.top	= 0,
+		.width	= 640,
+		.height	= 480,
+	},
+
+	/* Polarity */
+	.inv_pclk	= 0,
+	.inv_vsync	= 1,
+	.inv_href	= 0,
+	.inv_hsync	= 0,
+
+	.initialized	= 0,
+	.cam_power	= s5k5ba_power_en,
+};
+#endif
+
+#ifdef CONFIG_VIDEO_SAA7113
+static struct saa7113_platform_data saa7113_plat = {
+	.default_width = 720,
+	.default_height = 243,
 	.pixelformat = V4L2_PIX_FMT_UYVY,
 	.freq = 24000000,
 	.is_mipi = 0,
 };
 
+static struct i2c_board_info  saa7113_i2c_info = {
+	I2C_BOARD_INFO("SAA7113", 0x25),
+	.platform_data = &saa7113_plat,
+};
+
+static struct s3c_platform_camera saa7113 = {
+	.id		= CAMERA_PAR_A,
+	.type		= CAM_TYPE_ITU,
+	.fmt		= ITU_656_YCBCR422_8BIT,
+	.order422	= CAM_ORDER422_8BIT_CBYCRY,
+	.i2c_busnum	= 0,
+	.info		= &saa7113_i2c_info,
+	.pixelformat	= V4L2_PIX_FMT_UYVY,
+	.srclk_name	= "mout_mpll",
+	.clk_name	= "sclk_cam1",
+	.clk_rate	= 24000000,
+	.line_length	= 1920,
+	.width		= 720,
+	.height		= 243,
+	.window		= {
+		.left	= 0,
+		.top	= 0,
+		.width	= 720,
+		.height	= 243,
+	},
+
+	/* Polarity */
+	.inv_pclk	= 0,
+	.inv_vsync	= 0,
+	.inv_href	= 0,
+	.inv_hsync	= 1,
+
+	.initialized	= 0,
+#ifdef CAM_ITU_CH_A
+	.cam_power	= smdkv210_cam0_power,
+#else
+	.cam_power	= smdkv210_cam1_power,
+#endif
+};
+#endif
+
+
+/* 2 MIPI Cameras */
+#ifdef CONFIG_VIDEO_S5K4EA
+static struct s5k4ea_platform_data s5k4ea_plat = {
+	.default_width = 1920,
+	.default_height = 1080,
+	.pixelformat = V4L2_PIX_FMT_UYVY,
+	.freq = 24000000,
+	.is_mipi = 1,
+};
+
+static struct i2c_board_info  s5k4ea_i2c_info = {
+	I2C_BOARD_INFO("S5K4EA", 0x2d),
+	.platform_data = &s5k4ea_plat,
+};
+
+static struct s3c_platform_camera s5k4ea = {
+	.id		= CAMERA_CSI_C,
+	.type		= CAM_TYPE_MIPI,
+	.fmt		= MIPI_CSI_YCBCR422_8BIT,
+	.order422	= CAM_ORDER422_8BIT_CBYCRY,
+	.i2c_busnum	= 0,
+	.info		= &s5k4ea_i2c_info,
+	.pixelformat	= V4L2_PIX_FMT_UYVY,
+	.srclk_name	= "mout_mpll",
+	.clk_name	= "sclk_cam0",
+	/* .clk_name	= "sclk_cam1", */
+	.clk_rate	= 48000000,
+	.line_length	= 1920,
+	.width		= 1920,
+	.height		= 1080,
+	.window		= {
+		.left	= 0,
+		.top	= 0,
+		.width	= 1920,
+		.height	= 1080,
+	},
+
+	.mipi_lanes	= 2,
+	.mipi_settle	= 12,
+	.mipi_align	= 32,
+
+	/* Polarity */
+	.inv_pclk	= 0,
+	.inv_vsync	= 1,
+	.inv_href	= 0,
+	.inv_hsync	= 0,
+
+	.initialized	= 0,
+	.cam_power	= smdkv210_mipi_cam_power,
+};
+#endif
+
+/* 2 MIPI Cameras */
+#ifdef CONFIG_SOC_CAMERA_OV5640
+static struct ov5640_platform_data ov5640_plat = {
+	.default_width = 640,
+	.default_height = 480,
+	.pixelformat = V4L2_PIX_FMT_YUYV,
+	.freq = 24000000,
+	.is_mipi = 0,
+};
+
 static struct i2c_board_info  ov5640_i2c_info = {
-	I2C_BOARD_INFO("OV5640", 0x78>>1),
+	I2C_BOARD_INFO("OV5640", 0x78 >> 1),
 	.platform_data = &ov5640_plat,
 };
 
 static struct s3c_platform_camera ov5640 = {
+	#ifdef CAM_ITU_CH_A
 	.id		= CAMERA_PAR_A,
+	#else
+	.id		= CAMERA_PAR_B,
+	#endif
 	.type		= CAM_TYPE_ITU,
 	.fmt		= ITU_601_YCBCR422_8BIT,
 	.order422	= CAM_ORDER422_8BIT_YCBYCR,
@@ -1269,7 +1689,7 @@ static struct s3c_platform_camera ov5640 = {
 	/* .srclk_name	= "xusbxti", */
 	.clk_name	= "sclk_cam1",
 	.clk_rate	= 24000000,
-	.line_length	= 640,
+	.line_length	= 1920,
 	.width		= 640,
 	.height		= 480,
 	.window		= {
@@ -1286,56 +1706,10 @@ static struct s3c_platform_camera ov5640 = {
 	.inv_hsync	= 0,
 
 	.initialized	= 0,
-	.cam_power	= back_cam_power_en,
+	.cam_power	= ov5640_power_en,
 };
 #endif
 
-#ifdef CONFIG_VIDEO_OV3640
-static struct ov3640_platform_data ov3640_plat = {
-	.default_width = 640,
-	.default_height = 480,
-	.pixelformat = V4L2_PIX_FMT_UYVY,
-	.freq = 24000000,
-	.is_mipi = 0,
-};
-
-static struct i2c_board_info  ov3640_i2c_info = {
-	I2C_BOARD_INFO("OV3640", 0x78>>1),
-	.platform_data = &ov3640_plat,
-};
-
-static struct s3c_platform_camera ov3640 = {
-	.id		= CAMERA_PAR_B,
-	.type		= CAM_TYPE_ITU,
-	.fmt		= ITU_601_YCBCR422_8BIT,
-	.order422	= CAM_ORDER422_8BIT_YCBYCR,
-	.i2c_busnum	= 1,
-	.info		= &ov3640_i2c_info,
-	.pixelformat	= V4L2_PIX_FMT_UYVY,
-	.srclk_name	= "mout_mpll",
-	/* .srclk_name	= "xusbxti", */
-	.clk_name	= "sclk_cam0",
-	.clk_rate	= 24000000,
-	.line_length	= 640,
-	.width		= 640,
-	.height		= 480,
-	.window		= {
-		.left	= 0,
-		.top	= 0,
-		.width	= 640,
-		.height	= 480,
-	},
-
-	/* Polarity */
-	.inv_pclk	= 0,
-	.inv_vsync	= 1,
-	.inv_href	= 0,
-	.inv_hsync	= 0,
-
-	.initialized	= 0,
-	.cam_power	= front_cam_power_en,
-};
-#endif
 
 /* Interface setting */
 static struct s3c_platform_fimc fimc_plat_lsi = {
@@ -1343,13 +1717,36 @@ static struct s3c_platform_fimc fimc_plat_lsi = {
 	.clk_name	= "sclk_fimc",
 	.lclk_name	= "fimc",
 	.clk_rate	= 166750000,
+#if defined(CONFIG_VIDEO_S5K4EA)
+	.default_cam	= CAMERA_CSI_C,
+#else
+#ifdef CAM_ITU_CH_A
 	.default_cam	= CAMERA_PAR_A,
+#else
+	.default_cam	= CAMERA_PAR_B,
+#endif
+#endif
 	.camera		= {
-#ifdef CONFIG_VIDEO_OV5640
+#ifdef CONFIG_VIDEO_S5K4ECGX
+			&s5k4ecgx,
+#endif
+#ifdef CONFIG_VIDEO_S5KA3DFX
+			&s5ka3dfx,
+#endif
+#ifdef CONFIG_VIDEO_S5K4BA
+			&s5k4ba,
+#endif
+#ifdef CONFIG_VIDEO_SAA7113
+			&saa7113,
+#endif
+#ifdef CONFIG_VIDEO_S5K4EA
+			&s5k4ea,
+#endif
+#ifdef CONFIG_SOC_CAMERA_OV5640
 			&ov5640,
 #endif
-#ifdef CONFIG_VIDEO_OV3640
-			&ov3640,
+#ifdef CONFIG_VIDEO_HM5065
+			&hm5065,
 #endif
 	},
 	.hw_ver		= 0x43,
@@ -1357,7 +1754,7 @@ static struct s3c_platform_fimc fimc_plat_lsi = {
 
 #ifdef CONFIG_VIDEO_JPEG_V2
 static struct s3c_platform_jpeg jpeg_plat __initdata = {
-	.max_main_width		= 800,
+	.max_main_width	= 800,
 	.max_main_height	= 480,
 	.max_thumb_width	= 320,
 	.max_thumb_height	= 240,
@@ -1618,9 +2015,6 @@ void s5p_pm_power_off(void)
 void SPI_Initial(void)
 {
 	int err;
-	printk("----------------------SPI_Initial------------------------------\n");
-	printk("smdkv210_lte480wv_set_power.....................\n");
-	
 	err = gpio_request(S5PV210_GPJ2(4), "LCD_PWREN");
 	if (err)
 	{
@@ -2889,57 +3283,54 @@ void OTM8018B_HSD50_RGB_mode(void)
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
 
-#define GPIO_GPS_POWER_CTRL S5PV210_GPJ3(4)
-#define GPIO_GPS_nRST S5PV210_GPJ3(5)
-#define GPIO_GPS_PWR_EN S5PV210_GPJ3(6)
+#define GPIO_SCANNER_TRIGGER S5PV210_GPC1(1)
+#define GPIO_SCANNER_PWR_EN S5PV210_GPJ2(0)
 
-#define GPIO_GPS_RXD S5PV210_GPA0(0)
-
-static void gps_gpio_init(void)
+static void scanner_gpio_init(void)
 {
 	int err;
-	struct device *gps_dev;
-	sec_class = class_create(THIS_MODULE, "sec");
+	struct device *scanner_dev;
+	sec_class = class_create(THIS_MODULE, "jiebao");
 
-	gps_dev = device_create(sec_class, NULL, 0, NULL, "gps");
-	if (IS_ERR(gps_dev)) {
-		pr_err("Failed to create device(gps)!\n");
+	scanner_dev = device_create(sec_class, NULL, 0, NULL, "scanner");
+	if (IS_ERR(scanner_dev)) {
+		pr_err("Failed to create device(scanner)!\n");
 		goto err;
 	}
 
-	err = gpio_request(GPIO_GPS_POWER_CTRL, "GPIO_GPS_POWER_CTRL");
-	if (err)
-	{
-		printk(KERN_ERR "failed to request GPJ3(4) for GPIO_GPS_POWER_CTRL\n");
-	}
-	else
-	{
-		s3c_gpio_cfgpin(GPIO_GPS_POWER_CTRL, S3C_GPIO_OUTPUT);
-		s3c_gpio_setpull(GPIO_GPS_POWER_CTRL, S3C_GPIO_PULL_NONE);
-		gpio_direction_output(GPIO_GPS_POWER_CTRL, 1);
-	}
+	gpio_request(GPIO_SCANNER_TRIGGER, "SCANNER_TRIGGER");
+	s3c_gpio_setpull(GPIO_SCANNER_TRIGGER, S3C_GPIO_PULL_NONE);
+	s3c_gpio_cfgpin(GPIO_SCANNER_TRIGGER, S3C_GPIO_OUTPUT);
+	gpio_direction_output(GPIO_SCANNER_TRIGGER, 1);
 
-	mdelay(10);
+	gpio_request(GPIO_SCANNER_PWR_EN, "SCANNER_PWR_EN");
+	s3c_gpio_setpull(GPIO_SCANNER_PWR_EN, S3C_GPIO_PULL_NONE);
+	s3c_gpio_cfgpin(GPIO_SCANNER_PWR_EN, S3C_GPIO_OUTPUT);
+	gpio_direction_output(GPIO_SCANNER_PWR_EN, 0);
 
+	gpio_export_link(scanner_dev, "trigger", GPIO_SCANNER_TRIGGER);
+	gpio_export_link(scanner_dev, "power_en", GPIO_SCANNER_PWR_EN);
+
+ err:
+	return;
+}
+
+#define GPIO_GPS_nRST S5PV210_GPJ3(5)
+#define GPIO_GPS_ENABLE S5PV210_GPJ3(6)
+
+static void gps_gpio_init(void)
+{
 	gpio_request(GPIO_GPS_nRST, "GPS_nRST");
 	s3c_gpio_setpull(GPIO_GPS_nRST, S3C_GPIO_PULL_NONE);
 	s3c_gpio_cfgpin(GPIO_GPS_nRST, S3C_GPIO_OUTPUT);
 	gpio_direction_output(GPIO_GPS_nRST, 1);
 
-	gpio_request(GPIO_GPS_PWR_EN, "GPS_PWR_EN");
-	s3c_gpio_setpull(GPIO_GPS_PWR_EN, S3C_GPIO_PULL_NONE);
-	s3c_gpio_cfgpin(GPIO_GPS_PWR_EN, S3C_GPIO_OUTPUT);
-	gpio_direction_output(GPIO_GPS_PWR_EN, 1);
-
-	s3c_gpio_setpull(GPIO_GPS_RXD, S3C_GPIO_PULL_UP);
-	gpio_export(GPIO_GPS_nRST, 1);
-	gpio_export(GPIO_GPS_PWR_EN, 1);
-
-	gpio_export_link(gps_dev, "GPS_nRST", GPIO_GPS_nRST);
-	gpio_export_link(gps_dev, "GPS_PWR_EN", GPIO_GPS_PWR_EN);
-
- err:
-	return;
+	gpio_request(GPIO_GPS_ENABLE, "GPS_PWR_EN");
+	s3c_gpio_setpull(GPIO_GPS_ENABLE, S3C_GPIO_PULL_NONE);
+	s3c_gpio_cfgpin(GPIO_GPS_ENABLE, S3C_GPIO_OUTPUT);
+	gpio_direction_output(GPIO_GPS_ENABLE, 0);
+	mdelay(10);
+	gpio_direction_output(GPIO_GPS_ENABLE, 1);
 }
 
 static void __init smdkv210_machine_init(void)
@@ -2952,26 +3343,7 @@ static void __init smdkv210_machine_init(void)
 #ifdef CONFIG_ANDROID_PMEM
         android_pmem_set_platdata();
 #endif
-/*
-	if (!gpio_request(S5PV210_GPJ3(1), "CAM_PWDN")) {
-	    gpio_direction_output(S5PV210_GPJ2(1), 1);
-	    s3c_gpio_cfgpin(S5PV210_GPJ3(1), S3C_GPIO_SFN(0));
-	    s3c_gpio_setpull(S5PV210_GPJ3(1), S3C_GPIO_PULL_NONE);
-	}
-	if (!gpio_request(S5PV210_GPJ3(3), "CAM_EN")) {
-	    gpio_direction_output(S5PV210_GPJ3(3), 1);
-	    s3c_gpio_cfgpin(S5PV210_GPJ3(3), S3C_GPIO_SFN(0));
-	    s3c_gpio_setpull(S5PV210_GPJ3(3), S3C_GPIO_PULL_NONE);
-	}
-	if (!gpio_request(S5PV210_GPJ3(2), "CAM_RST")) {
-	    gpio_direction_output(S5PV210_GPJ3(2), 1);
-	    s3c_gpio_cfgpin(S5PV210_GPJ3(2), S3C_GPIO_SFN(0));
-	    s3c_gpio_setpull(S5PV210_GPJ3(2), S3C_GPIO_PULL_NONE);
-	    msleep(100);
-	    gpio_direction_output(S5PV210_GPJ3(2),1);
-	    msleep(100);
-	}
-*/
+
 	//samsung_keypad_set_platdata(&smdkv210_keypad_data);
 	//s3c24xx_ts_set_platdata(&s3c_ts_platform);
 
@@ -3017,8 +3389,11 @@ static void __init smdkv210_machine_init(void)
         s3c_fimc0_set_platdata(&fimc_plat_lsi);
         s3c_fimc1_set_platdata(&fimc_plat_lsi);
         s3c_fimc2_set_platdata(&fimc_plat_lsi);
-//				smdkv210_cam0_power(1);
-//				smdkv210_cam1_power(1);
+#ifdef CAM_ITU_CH_A
+	smdkv210_cam0_power(1);
+#else
+	smdkv210_cam1_power(1);
+#endif
 #endif
 #ifdef CONFIG_VIDEO_FIMC_MIPI
 	s3c_csis_set_platdata(NULL);
@@ -3056,28 +3431,36 @@ static void __init smdkv210_machine_init(void)
         clk_xusbxti.rate = 24000000;
 	smdkc110_setup_clocks(); 
 	
+	scanner_gpio_init();
 	gps_gpio_init();
-	s3c_gpio_cfgpin(S5PV210_GPE1(3), S5PV210_GPE1_3_CAM_A_CLKOUT);
-
-	/*
+	//ov5640_init();
+	hm5065_init();
+	
 	if (!gpio_request(S5PV210_GPJ4(4), "WIFI_PWR")) {
 	    gpio_direction_output(S5PV210_GPJ4(4), 1);
-	    s3c_gpio_cfgpin(S5PV210_GPJ4(4), S3C_GPIO_SFN(0));
+	    s3c_gpio_cfgpin(S5PV210_GPJ4(4), S3C_GPIO_SFN(1));
 	    s3c_gpio_setpull(S5PV210_GPJ4(4), S3C_GPIO_PULL_NONE);
 	}
 	if (!gpio_request(S5PV210_GPJ4(3), "WIFI_PDN")) {
 	    gpio_direction_output(S5PV210_GPJ4(3), 1);
-	    s3c_gpio_cfgpin(S5PV210_GPJ4(3), S3C_GPIO_SFN(0));
+	    s3c_gpio_cfgpin(S5PV210_GPJ4(3), S3C_GPIO_SFN(1));
 	    s3c_gpio_setpull(S5PV210_GPJ4(3), S3C_GPIO_PULL_NONE);
 	}
 	if (!gpio_request(S5PV210_GPJ4(2), "WIFI_RST")) {
 	    gpio_direction_output(S5PV210_GPJ4(2), 1);
-	    s3c_gpio_cfgpin(S5PV210_GPJ4(2), S3C_GPIO_SFN(0));
+	    s3c_gpio_cfgpin(S5PV210_GPJ4(2), S3C_GPIO_SFN(1));
 	    s3c_gpio_setpull(S5PV210_GPJ4(2), S3C_GPIO_PULL_NONE);
 	    msleep(100);
 	    gpio_direction_output(S5PV210_GPJ4(2),1);
 	}
-	*/
+	
+	if (!gpio_request(S5PV210_GPJ2(2), "AUDIO_PWR_CTR")) {
+	    gpio_direction_output(S5PV210_GPJ2(2), 1);
+	    s3c_gpio_cfgpin(S5PV210_GPJ2(2), S3C_GPIO_SFN(1));
+	    s3c_gpio_setpull(S5PV210_GPJ2(2), S3C_GPIO_PULL_NONE);
+	}
+	
+	s3c_gpio_cfgpin(S5PV210_GPE1(3), S5PV210_GPE1_3_CAM_A_CLKOUT);
 }
 
 MACHINE_START(SMDKC110, "SMDKC110")

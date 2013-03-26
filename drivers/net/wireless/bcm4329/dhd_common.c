@@ -1897,41 +1897,6 @@ fail:
 
 #endif
 
-/*
- * returns = TRUE if associated, FALSE if not associated
- */
-bool is_associated(dhd_pub_t *dhd, void *bss_buf)
-{
-	char bssid[ETHER_ADDR_LEN], zbuf[ETHER_ADDR_LEN];
-	int ret = -1;
-
-	bzero(bssid, ETHER_ADDR_LEN);
-	bzero(zbuf, ETHER_ADDR_LEN);
-
-	ret = dhdcdc_set_ioctl(dhd, 0, WLC_GET_BSSID, (char *)bssid, ETHER_ADDR_LEN);
-	DHD_TRACE((" %s WLC_GET_BSSID ioctl res = %d\n", __FUNCTION__, ret));
-
-	if (ret == BCME_NOTASSOCIATED) {
-		DHD_TRACE(("%s: not associated! res:%d\n", __FUNCTION__, ret));
-	}
-
-	if (ret < 0)
-		return FALSE;
-
-	if ((memcmp(bssid, zbuf, ETHER_ADDR_LEN) != 0)) {
-		/*  STA is assocoated BSSID is non zero */
-
-		if (bss_buf) {
-			/* return bss if caller provided buf */
-			memcpy(bss_buf, bssid, ETHER_ADDR_LEN);
-		}
-		return TRUE;
-	} else {
-		DHD_TRACE(("%s: WLC_GET_BSSID ioctl returned zero bssid\n", __FUNCTION__));
-		return FALSE;
-	}
-}
-
 /* Function to estimate possible DTIM_SKIP value */
 int dhd_get_dtim_skip(dhd_pub_t *dhd)
 {
