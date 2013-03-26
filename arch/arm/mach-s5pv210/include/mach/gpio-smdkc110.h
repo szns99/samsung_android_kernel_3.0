@@ -27,6 +27,16 @@
 #define GPIO_MICBIAS_EN			S5PV210_GPJ4(2)
 
 #define GPIO_UART_SEL			S5PV210_MP05(7)
+
+/*camera reset pin*/
+#define CAMERA_RESET_PIN		S5PV210_GPJ2(7)
+/*camera power down pin*/
+#define CAMERA_PDN_PIN			S5PV210_GPJ2(6)
+/*camera power pin*/
+#define CAMERA_POWER_PIN		S5PV210_GPJ3(3)
+
+/*camera ready pin*/
+//#define CAMERA_INT_PIN			S5PV210_GPH3(2)
 #endif
 /* end of __GPIO_SMDKC110_H_ */
 

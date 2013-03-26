@@ -56,8 +56,8 @@ static bcm_static_buf_t *bcm_static_buf = 0;
 
 #define MAX_STATIC_PKT_NUM 8
 typedef struct bcm_static_pkt {
-	struct sk_buff *skb_4k[MAX_STATIC_PKT_NUM];
-	struct sk_buff *skb_8k[MAX_STATIC_PKT_NUM];
+	struct sk_buff *skb_4k[MAX_STATIC_PKT_NUM*2];
+	struct sk_buff *skb_8k[MAX_STATIC_PKT_NUM*2];
 	struct mutex osl_pkt_sem;
 	unsigned char pkt_use[MAX_STATIC_PKT_NUM*2];
 } bcm_static_pkt_t;

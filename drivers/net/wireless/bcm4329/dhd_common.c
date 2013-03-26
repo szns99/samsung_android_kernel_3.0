@@ -144,7 +144,7 @@ dhd_common_init(void)
 	 * behaviour since the value of the globals may be different on the
 	 * first time that the driver is initialized vs subsequent initializations.
 	 */
-	dhd_msg_level = DHD_ERROR_VAL;
+	dhd_msg_level = 0xffff;//DHD_ERROR_VAL;
 #ifdef CONFIG_BCM4329_FW_PATH
 	strncpy(fw_path, CONFIG_BCM4329_FW_PATH, MOD_PARAM_PATHLEN-1);
 #else
@@ -155,6 +155,7 @@ dhd_common_init(void)
 #else
 	nv_path[0] = '\0';
 #endif
+     printk("fw_path=%s--nv_path=%s\r\n",fw_path,nv_path);
 }
 
 static int
@@ -2014,6 +2015,7 @@ int dhd_pno_clean(dhd_pub_t *dhd)
 int dhd_pno_enable(dhd_pub_t *dhd, int pfn_enabled)
 {
 	char iovbuf[128];
+	uint8 bssid[6];
 	int ret = -1;
 
 	if ((!dhd) && ((pfn_enabled != 0) || (pfn_enabled != 1))) {
@@ -2024,7 +2026,12 @@ int dhd_pno_enable(dhd_pub_t *dhd, int pfn_enabled)
 	memset(iovbuf, 0, sizeof(iovbuf));
 
 	/* Check if disassoc to enable pno */
-	if (pfn_enabled && (is_associated(dhd, NULL) == TRUE)) {
+	if ((pfn_enabled) && \
+		((ret = dhdcdc_set_ioctl(dhd, 0, WLC_GET_BSSID, \
+				 (char *)&bssid, ETHER_ADDR_LEN)) == BCME_NOTASSOCIATED)) {
+		DHD_TRACE(("%s pno enable called in disassoc mode\n", __FUNCTION__));
+	}
+	else if (pfn_enabled) {
 		DHD_ERROR(("%s pno enable called in assoc mode ret=%d\n", \
 			__FUNCTION__, ret));
 		return ret;
