@@ -11,7 +11,7 @@
 /*i2c控制器的设备号:具体看所使用平台硬件的连接，由于使用了自动探测，此处可以不设置，方案2、3需要配置*/
 #define	AXP_I2CBUS			1
 /*电源芯片对应的中断号：具体看所使用的平台硬件的连接，中断线nmi连接cpu的哪路irq或者gpio*/
-#define AXP_IRQNO			S5PV210_GPH0(1)
+#define AXP_IRQNO			S5PV210_GPH3(7)
 
 /*初始化各路输出，单位mV，0都为关闭*/
 /*
@@ -59,10 +59,10 @@
 #define AXP_DCDC3_VALUE		3000
 
 /*电池容量，mAh：根据实际电池容量来定义，对库仑计方法来说这个参数很重要，必须配置*/
-#define BATCAP				4400
+#define BATCAP				2700
 
 /*初始化电池内阻，mΩ：一般在100~200之间，不过最好根据实际测试出来的确定，方法是打开打印信息，不接电池烧好固件后，上电池，不接充电器，开机，开机1分钟后，接上充电器，充1~2分钟，看打印信息中的rdc值，填入这里*/
-#define BATRDC				172
+#define BATRDC				200
 /*开路电压方法中的电池电压的缓存*/
 #define AXP_VOL_MAX			12
 
@@ -91,7 +91,7 @@
 	AXP20:10\15
 	AXP19:10\15
 */ 
-#define ENDCHGRATE			10
+#define ENDCHGRATE			5
 /*adc采样率设置，Hz*/
 /*
 	AXP20:25\50\100\200
@@ -176,7 +176,7 @@
 	AXP20:100/500/900
 	AXP19:100/500
 */
-#define USBCURLIM			0
+#define USBCURLIM			500
 
 /*电池信息剩余容量百分比的工作队列更新时间，s*/
 #define TIMER1				10
@@ -239,18 +239,18 @@
 #define OCVREG0				0		  //3132
 #define OCVREG1				0		  //3273
 #define OCVREG2				0		  //3414
-#define OCVREG3				0		//3555
-#define OCVREG4				10//10		//3625
-#define OCVREG5				14//17		//3660
-#define OCVREG6				18//28		//3696
-#define OCVREG7				26//38		//3731
-#define OCVREG8				40//47		//3766
-#define OCVREG9				48//53		//3801
-#define OCVREGA				54//60		//3836
-#define OCVREGB				59//67		//3872
-#define OCVREGC				67//75		//3942
-#define OCVREGD				75//81		//4012
-#define OCVREGE				85//89		//4083
+#define OCVREG3				2		//3555
+#define OCVREG4				14//10		//3625
+#define OCVREG5				23//17		//3660
+#define OCVREG6				33//28		//3696
+#define OCVREG7				40//38		//3731
+#define OCVREG8				47//47		//3766
+#define OCVREG9				53//53		//3801
+#define OCVREGA				58//60		//3836
+#define OCVREGB				63//67		//3872
+#define OCVREGC				72//75		//3942
+#define OCVREGD				79//81		//4012
+#define OCVREGE				86//89		//4083
 #define OCVREGF				100		//4153
 #endif
 
