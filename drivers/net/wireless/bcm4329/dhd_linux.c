@@ -411,7 +411,7 @@ uint dhd_roam = 1;
 uint dhd_radio_up = 1;
 
 /* Network inteface name */
-char iface_name[IFNAMSIZ];
+char iface_name[IFNAMSIZ]={"wlan0"};
 module_param_string(iface_name, iface_name, IFNAMSIZ, 0);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
@@ -1437,7 +1437,7 @@ dhd_watchdog_thread(void *data)
 		if (down_interruptible (&dhd->watchdog_sem) == 0) {
 			dhd_os_sdlock(&dhd->pub);
 			if (dhd->pub.dongle_reset == FALSE) {
-				DHD_TIMER(("%s:\n", __FUNCTION__));
+				//DHD_TIMER(("%s:\n", __FUNCTION__));
 				/* Call the bus module watchdog */
 				dhd_bus_watchdog(&dhd->pub);
 
@@ -2636,6 +2636,7 @@ dhd_module_init(void)
 {
 	int error;
 
+printk("%s: Enter\n", __FUNCTION__);
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 
 	/* Sanity check on the module parameters */
@@ -2649,6 +2650,7 @@ dhd_module_init(void)
 			break;
 
 		DHD_ERROR(("Invalid module parameters.\n"));
+		printk("Invalid module parameters.\n");
 		return -EINVAL;
 	} while (0);
 

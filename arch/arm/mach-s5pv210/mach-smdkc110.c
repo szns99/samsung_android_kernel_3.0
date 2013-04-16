@@ -44,6 +44,7 @@
 #include <mach/regs-fb.h>
 #include <linux/pwm.h>
 #include <plat/regs-fimc.h>
+#include <linux/wlan_plat.h>
 
 #ifdef CONFIG_VIDEO_S5K4BA
 #include <media/s5k4ba_platform.h>
@@ -1061,6 +1062,122 @@ static struct ft5x0x_platform_data ft5x0x_info = {
 };
 #endif
 
+//#ifdef CONFIG_BCM4329
+//extern void wifi_card_set_power(unsigned int power_mode);
+extern void wifi_rescan(unsigned long delay);
+void wifi_card_set_power(unsigned int power_mode)
+{
+	printk("---------------------%s---------------------------\n", __func__);
+	if (power_mode) {
+		//wlan host wakeup:   int 20, pull down 
+		s3c_gpio_cfgpin(WL_HOST_WAKE, S3C_GPIO_INT);  
+		s3c_gpio_setpull(WL_HOST_WAKE, S3C_GPIO_PULL_DOWN);  
+
+		//wake: output , pull null , 0  
+		s3c_gpio_cfgpin(WL_WAKE, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(WL_WAKE,  S3C_GPIO_PULL_NONE);
+		gpio_set_value(WL_WAKE,  0);
+
+		//wlan reset: output ,1
+		s3c_gpio_cfgpin(WL_RESET,  S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(WL_RESET, S3C_GPIO_PULL_NONE);
+		gpio_set_value(WL_RESET, 1);
+
+		//wlan power:output ,1
+		s3c_gpio_cfgpin(WL_POWER, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(WL_POWER, S3C_GPIO_PULL_NONE);
+		gpio_set_value(WL_POWER, 1);
+
+		//bt power
+		//s3c_gpio_cfgpin(BT_POWER, S3C_GPIO_OUTPUT);
+		//s3c_gpio_setpull(BT_POWER, S3C_GPIO_PULL_NONE);
+		//gpio_set_value(BT_POWER, 1);
+	} else {
+		gpio_set_value(WL_RESET, 0);
+#if 0
+		if (!gpio_get_value(BT_RESET) ) {
+			gpio_set_value(BT_POWER, 0);
+			gpio_set_value(WL_POWER, 0);
+		}
+#endif
+	}
+}
+
+static int wlan_power_en(int onoff)
+{
+	printk("---------------------%s---------------------------\n", __func__);
+//	if (gpio_get_value(WL_CD_PIN)) {
+//		WARN(1, "WL_WIFICS is HI\n");
+//	} else {
+		//msleep(2 * 1000);
+		/* must be mmc card detected pin low */
+		if (onoff) {
+			wifi_card_set_power(1);
+			msleep(200);
+		} else {
+			wifi_card_set_power(0);
+		}
+//	}
+	return 0;
+}
+
+
+//set reset pin 
+static int wlan_reset_en(int onoff)
+{	
+	printk("---------------------%s---------------------------\n", __func__);
+	gpio_set_value(WL_RESET, onoff ? 1 : 0);
+	return 0;
+}
+
+static int wlan_carddetect(int  onoff )
+{
+	printk("---------------------%s---------------------------\n", __func__);
+	
+	s5pv210_setup_sdhci0_cfg_gpio(NULL, 4);
+	//if(onoff) {
+		//s5pv210_setup_sdhci1_cfg_gpio(NULL, 4);
+	//} else {
+		//s5pv210_setup_sdhci1_cfg_gpio(NULL, 0);
+	//}
+	
+	//wifi_rescan(1000);
+	//msleep(10);
+	//gpio_set_value(WL_CD_PIN, !onoff);
+	//msleep(400);
+	return 0;
+}
+
+static struct wifi_platform_data wifi_pdata = {	
+	.set_power		= wlan_power_en,
+	.set_reset		= wlan_reset_en,
+	.set_carddetect  	= wlan_carddetect,
+//	.mem_prealloc		= wlan_mem_prealloc,
+	
+};
+
+ static struct resource wifi_resources[] = {
+	 [0] = {
+		 .name	 	= "bcm4329_wlan_irq",
+		 .start  		= IRQ_EINT(8),
+		 .end		= IRQ_EINT(8),
+		 .flags  		= IORESOURCE_IRQ | IRQF_TRIGGER_HIGH| IRQF_ONESHOT,  /*wlan host wake : high*/
+	 },
+ };
+ 
+static struct platform_device  bcm4929_wifi = {
+	.name			= "bcm4329_wlan",
+	.id				= -1,
+	.num_resources	= ARRAY_SIZE(wifi_resources),
+	.resource			= wifi_resources,
+	.dev				= {
+		.platform_data = &wifi_pdata,
+	},
+};
+//#endif
+
+
+
 static struct platform_device *smdkv210_devices[] __initdata = {
 	&s3c_device_adc,
 	&s3c_device_cfcon,
@@ -1158,6 +1275,10 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 #if defined(CONFIG_MT8630)
 	&s5p_device_mt8630,
 #endif
+
+//#ifdef CONFIG_BCM4329
+	&bcm4929_wifi,
+//#endif
 };
 /*
  * External camera reset
@@ -1799,6 +1920,32 @@ static struct i2c_board_info smdkv210_i2c_devs1[] __initdata = {
                 I2C_BOARD_INFO("s5p_ddc", (0x74>>1)),
         },
 #endif	
+#if defined (CONFIG_GS_MMA8452)
+	{
+		.type	        = "gs_mma8452",
+		.addr	        = 0x1d,
+		.flags	      = 0,
+		.irq	        = MMA8452_INT_PIN,
+		.platform_data= &mma8452_info,
+	},
+#endif
+#if defined (CONFIG_RTC_DRV_S35392A)
+	{
+		.type           = "rtc_s35392a",
+		.addr           = 0x30,
+		.flags          = 0,
+		.irq            = S5PV210_GPH0(2),
+	},
+ #endif
+#if defined (CONFIG_GS_MMA7660)
+	{
+		.type	        = "gs_mma8452",
+		.addr	        = 0x4c,
+		.flags	      = 0,
+		.irq	        = MMA8452_INT_PIN,
+		.platform_data= &mma8452_info,
+	},
+#endif
 };
 
 #ifdef CONFIG_KP_AXP20
@@ -1819,32 +1966,6 @@ static struct i2c_board_info smdkv210_i2c_devs2[] __initdata = {
 		.irq =S5PV210_GPH0(1),
 		.platform_data = &axp_pdata,
   },
-#endif
-#if defined (CONFIG_GS_MMA8452)
-	{
-		.type	        = "gs_mma8452",
-		.addr	        = 0x1d,
-		.flags	      = 0,
-		.irq	        = MMA8452_INT_PIN,
-		.platform_data= &mma8452_info,
-	},
-#endif
-#if defined (CONFIG_RTC_DRV_S35392A)
-	{
-		.type           = "rtc_s35392a",
-		.addr           = 0x30,
-		.flags          = 0,
-		.irq            = S5PV210_GPH1(4),
-	},
- #endif
-#if defined (CONFIG_GS_MMA7660)
-	{
-		.type	        = "gs_mma8452",
-		.addr	        = 0x4c,
-		.flags	      = 0,
-		.irq	        = MMA8452_INT_PIN,
-		.platform_data= &mma8452_info,
-	},
 #endif
 };
 
@@ -3308,6 +3429,9 @@ static void scanner_gpio_init(void)
 	s3c_gpio_cfgpin(GPIO_SCANNER_PWR_EN, S3C_GPIO_OUTPUT);
 	gpio_direction_output(GPIO_SCANNER_PWR_EN, 0);
 
+	gpio_export(GPIO_SCANNER_TRIGGER, 0);
+	gpio_export(GPIO_SCANNER_PWR_EN, 0);
+
 	gpio_export_link(scanner_dev, "trigger", GPIO_SCANNER_TRIGGER);
 	gpio_export_link(scanner_dev, "power_en", GPIO_SCANNER_PWR_EN);
 
@@ -3435,7 +3559,7 @@ static void __init smdkv210_machine_init(void)
 	gps_gpio_init();
 	//ov5640_init();
 	hm5065_init();
-	
+#if 0	
 	if (!gpio_request(S5PV210_GPJ4(4), "WIFI_PWR")) {
 	    gpio_direction_output(S5PV210_GPJ4(4), 1);
 	    s3c_gpio_cfgpin(S5PV210_GPJ4(4), S3C_GPIO_SFN(1));
@@ -3453,14 +3577,17 @@ static void __init smdkv210_machine_init(void)
 	    msleep(100);
 	    gpio_direction_output(S5PV210_GPJ4(2),1);
 	}
+#endif	
 	
 	if (!gpio_request(S5PV210_GPJ2(2), "AUDIO_PWR_CTR")) {
-	    gpio_direction_output(S5PV210_GPJ2(2), 1);
+	    gpio_direction_output(S5PV210_GPJ2(2), 0);
 	    s3c_gpio_cfgpin(S5PV210_GPJ2(2), S3C_GPIO_SFN(1));
 	    s3c_gpio_setpull(S5PV210_GPJ2(2), S3C_GPIO_PULL_NONE);
 	}
 	
 	s3c_gpio_cfgpin(S5PV210_GPE1(3), S5PV210_GPE1_3_CAM_A_CLKOUT);
+	
+	wifi_card_set_power(1);
 }
 
 MACHINE_START(SMDKC110, "SMDKC110")

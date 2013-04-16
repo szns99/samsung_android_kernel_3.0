@@ -69,6 +69,13 @@ struct s3c_gpio_cfg {
 #define S3C_GPIO_OUTPUT	(S3C_GPIO_SPECIAL(1))
 #define S3C_GPIO_SFN(x)	(S3C_GPIO_SPECIAL(x))
 
+#if defined(CONFIG_CPU_S5PV210)
+#define S3C_GPIO_INT (S3C_GPIO_SPECIAL(15))
+#else
+#define S3C_GPIO_INT (S3C_GPIO_SPECIAL(2))
+#endif
+#define S3C_GPIO_RESERVED (S3C_GPIO_SPECIAL(10))
+
 #define s3c_gpio_is_cfg_special(_cfg) \
 	(((_cfg) & S3C_GPIO_SPECIAL_MARK) == S3C_GPIO_SPECIAL_MARK)
 

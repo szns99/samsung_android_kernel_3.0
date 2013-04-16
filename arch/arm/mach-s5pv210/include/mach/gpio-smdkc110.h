@@ -37,6 +37,14 @@
 
 /*camera ready pin*/
 //#define CAMERA_INT_PIN			S5PV210_GPH3(2)
+
+/*sdhci1 power pin*/
+//#define WL_CD_PIN				S5PV210_GPG0(6)
+#define WL_RESET    		S5PV210_GPJ4(2)
+#define WL_POWER				S5PV210_GPG1(0)
+#define WL_WAKE					S5PV210_GPG1(3)
+#define WL_HOST_WAKE		S5PV210_GPH1(0)
+
 #endif
 /* end of __GPIO_SMDKC110_H_ */
 
