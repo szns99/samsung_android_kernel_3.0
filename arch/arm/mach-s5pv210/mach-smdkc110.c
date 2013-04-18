@@ -836,24 +836,14 @@ static void lte480wv_cfg_gpio(struct platform_device *pdev)
 static int lte480wv_backlight_on(struct platform_device *pdev)
 {
 	printk("lte480wv_backlight_on.....................\n");
-	if (!gpio_request(S5PV210_GPJ2(5), "PWM_PWR")) {
-	    gpio_direction_output(S5PV210_GPJ2(5), 1);
-	    s3c_gpio_cfgpin(S5PV210_GPJ2(5), S3C_GPIO_SFN(1));
-	    s3c_gpio_setpull(S5PV210_GPJ2(5), S3C_GPIO_PULL_NONE);
-	    gpio_free(S5PV210_GPJ2(5));
-	}
+  gpio_direction_output(S5PV210_GPJ2(5), 1);
 }
 
 
 static int lte480wv_backlight_off(struct platform_device *pdev, int onoff)
 {
 	printk("lte480wv_backlight_off.....................\n");
-	if (!gpio_request(S5PV210_GPJ2(5), "PWM_PWR")) {
-	    gpio_direction_output(S5PV210_GPJ2(5), 0);
-	    s3c_gpio_cfgpin(S5PV210_GPJ2(5), S3C_GPIO_SFN(1));
-	    s3c_gpio_setpull(S5PV210_GPJ2(5), S3C_GPIO_PULL_NONE);
-	    gpio_free(S5PV210_GPJ2(5));
-	}
+  gpio_direction_output(S5PV210_GPJ2(5), 0);
   return 0;
 }
 
@@ -911,7 +901,7 @@ static int smdkv210_backlight_init(struct device *dev)
 
 	ir_led_pwm_init();
 	//need to check the calling function for this function and remove the call.
-	return 0;
+	//return 0;
 
 	ret = gpio_request(S5PV210_GPD0(0), "Backlight_PWM");
 	if (ret) {
@@ -920,7 +910,7 @@ static int smdkv210_backlight_init(struct device *dev)
 	}
 
 	/* Configure GPIO pin with S5PV210_GPD_0_0_TOUT_0 */
-	s3c_gpio_cfgpin(S5PV210_GPD0(0), S5PV210_GPD_0_0_TOUT_0);
+	s3c_gpio_cfgpin(S5PV210_GPD0(0), S3C_GPIO_SFN(2));
 	gpio_free(S5PV210_GPD0(0));
 
 	return 0;
@@ -936,7 +926,7 @@ static struct platform_pwm_backlight_data smdkv210_backlight_data = {
 	.pwm_id		= 0,
 	.max_brightness	= 100,
 	.dft_brightness	= 80,
-	.pwm_period_ns	= 100000,
+	.pwm_period_ns	= 30000,
 	.init		= smdkv210_backlight_init,
 	.exit		= smdkv210_backlight_exit,
 };
@@ -2146,7 +2136,20 @@ void SPI_Initial(void)
 		s3c_gpio_cfgpin(S5PV210_GPJ2(4), S3C_GPIO_SFN(1));
 		s3c_gpio_setpull(S5PV210_GPJ2(4), S3C_GPIO_PULL_NONE);
 		gpio_direction_output(S5PV210_GPJ2(4), 1);
-		gpio_free(S5PV210_GPJ2(4));
+		//gpio_free(S5PV210_GPJ2(4));
+	}
+	err = gpio_request(S5PV210_GPJ2(5), "PWM_PWR");
+	if (err)
+	{
+		printk(KERN_ERR "failed to request GPJ2(5) for PWM_PWR\n");
+	}
+	else
+	{
+		s3c_gpio_cfgpin(S5PV210_GPJ2(5), S3C_GPIO_SFN(1));
+		s3c_gpio_setpull(S5PV210_GPJ2(5), S3C_GPIO_PULL_NONE);
+		gpio_direction_output(S5PV210_GPJ2(5), 1);
+		//gpio_free(S5PV210_GPJ2(5));
+		//while(1);
 	}
 	
 	printk("lte480wv_reset_lcd.....................\n");
