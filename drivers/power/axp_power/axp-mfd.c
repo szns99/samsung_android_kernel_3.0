@@ -324,31 +324,38 @@ static int __devinit axp_mfd_probe(struct i2c_client *client,
 	ret = chip->ops->init_chip(chip);
 	if (ret)
 		goto out_free_chip;
-		
+
+/*		
 		///-----
+	printk("%s----------------------%d!\n",__func__,__LINE__);
 uint8_t tmp = 0;
 	__axp_read(chip->client, POWER20_GPIO0_CTL, &tmp);
 	__axp_write(chip->client, POWER20_GPIO0_CTL, (tmp & 0xf8 )|0x03);
 	msleep(30);
+	printk("%s----------------------%d!\n",__func__,__LINE__);
 	
 	tmp = 0;
 	__axp_read(chip->client, POWER20_GPIO0_VOL, &tmp);
 	__axp_write(chip->client, POWER20_GPIO0_VOL, tmp|0xff);
 	
+	printk("%s----------------------%d!\n",__func__,__LINE__);
 	tmp = 0;
 	__axp_read(chip->client, POWER19_CHARGE1, &tmp);
 	__axp_write(chip->client, POWER19_CHARGE1, tmp|0x09);
 
+	printk("%s----------------------%d!\n",__func__,__LINE__);
 
 		tmp = 0;
 	__axp_read(chip->client, POWER20_DC2OUT_VOL, &tmp);
 	__axp_write(chip->client, POWER20_DC2OUT_VOL, 0x20);
 
+	printk("%s----------------------%d!\n",__func__,__LINE__);
 		tmp = 0;
 	__axp_read(chip->client, POWER20_DC3OUT_VOL, &tmp);
 	__axp_write(chip->client, POWER20_DC3OUT_VOL, 0x5c);
+	printk("%s----------------------%d!\n",__func__,__LINE__);
 	//------
-
+*/
 #if defined (CONFIG_KP_USEIRQ)
 	INIT_WORK(&chip->irq_work, axp_mfd_irq_work);
 	BLOCKING_INIT_NOTIFIER_HEAD(&chip->notifier_list);

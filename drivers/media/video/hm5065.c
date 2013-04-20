@@ -222,7 +222,8 @@ static struct hm5065_format_struct {
 enum 
 {
     HM5065_PREVIEW_VGA,
-    HM5065_CAPTRUE_UXGA,
+    //HM5065_CAPTRUE_UXGA,
+    HM5065_CAPTRUE_5M,
 };
 
 struct hm5065_enum_framesize
@@ -235,7 +236,8 @@ struct hm5065_enum_framesize
 struct hm5065_enum_framesize hm5065_framesize_list[] = 
 {
     { HM5065_PREVIEW_VGA, HM5065_PREVIEW_WIDTH, HM5065_PREVIEW_HEIGHT },
-    { HM5065_CAPTRUE_UXGA, HM5065_CAPTURE_WIDTH, HM5065_CAPTURE_HEIGHT }
+    //{ HM5065_CAPTRUE_UXGA, HM5065_CAPTURE_WIDTH, HM5065_CAPTURE_HEIGHT }
+    { HM5065_CAPTRUE_5M, 2592, 1944}
 };
 
 static u8 af_pos_h = 0;
@@ -628,14 +630,14 @@ static int hm5065_Snapshot(struct v4l2_subdev *sd)
 
     printk("hm5065_Snapshot \n");
 
-    hm5065_read(sd, 0x0700, &value1);
-    hm5065_read(sd, 0x0701, &value2);
+    hm5065_read(sd, 0x06F0, &value1);	//700,af_pos_h
+    hm5065_read(sd, 0x06F1, &value2);	//701,af_pos_l
     printk("capture brant read target af pos: %02x %02x.\n", value1, value2);
 
 	err = hm5065_write_regs(sd, hm5065_regs_capture1, hm5065_regs_capture1_size);
     
-    hm5065_i2c_reg(sd, 0x0734, af_pos_h & 0xFF);
-    hm5065_i2c_reg(sd, 0x0735, af_pos_l & 0xFF);
+    hm5065_i2c_reg(sd, 0x0734, value1 & 0xFF);	//af_pos_h
+    hm5065_i2c_reg(sd, 0x0735, value2 & 0xFF);	//af_pos_L
 
     hm5065_read(sd, 0x0700, &value1);
     hm5065_read(sd, 0x0701, &value2);
@@ -974,7 +976,8 @@ static int hm5065_s_fmt(struct v4l2_subdev *sd, struct v4l2_format *fmt)
     if(hm5065_formats[index].resolution_width==HM5065_CAPTURE_WIDTH&&
         hm5065_formats[index].resolution_height==HM5065_CAPTURE_HEIGHT)
     {
-        state->framesize_index = HM5065_CAPTRUE_UXGA;
+        //state->framesize_index = HM5065_CAPTRUE_UXGA;
+        state->framesize_index = HM5065_CAPTRUE_5M;
         dev_dbg_cam(&client->dev, "%s: Set framesize_index:%d\n", __func__, state->framesize_index);
     }
     else
@@ -1435,7 +1438,9 @@ static int hm5065_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
         dev_dbg_cam(&client->dev, "%s: V4L2_CID_CAM_PREVIEW_ONOFF, value:%d, state->framesize_index:%d\n", \
 			__func__,ctrl->value,state->framesize_index);
 		cancel_delayed_work(&state->work);
-		if(state->framesize_index == HM5065_CAPTRUE_UXGA)
+		//if(state->framesize_index == HM5065_CAPTRUE_UXGA)
+		if(state->framesize_index == HM5065_CAPTRUE_5M)
+		
 		{
 			err = hm5065_Snapshot(sd);
 		}

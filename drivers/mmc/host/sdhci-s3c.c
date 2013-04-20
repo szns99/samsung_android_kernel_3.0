@@ -312,6 +312,14 @@ irqreturn_t sdhci_irq_cd(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+struct sdhci_host *host_wifi = NULL;
+void wifi_rescan(unsigned long delay)
+{
+	//mmc_detect_change(host_wifi->mmc, msecs_to_jiffies(1000));
+	mmc_detect_change(host_wifi->mmc, msecs_to_jiffies(delay));
+}
+EXPORT_SYMBOL(wifi_rescan);
+
 static int __devinit sdhci_s3c_probe(struct platform_device *pdev)
 {
 	struct s3c_sdhci_platdata *pdata = pdev->dev.platform_data;
@@ -467,6 +475,9 @@ static int __devinit sdhci_s3c_probe(struct platform_device *pdev)
 		ret = request_irq(pdata->ext_cd, sdhci_irq_cd,
 				IRQF_SHARED, mmc_hostname(host->mmc), sc);
 	}
+	
+	if(pdev->id == 0)
+		host_wifi = host;
 
 	return 0;
 

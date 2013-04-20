@@ -681,7 +681,7 @@ static int axp_usb_curlim(int cur)
 				printk("[AXP]Uable to set usb current set 500mA\n");
 		}
 		else if (cur == 100){
-			ret = axp_update(axpcharger->master, AXP_CHARGE_VBUS,0x10, 0x03);
+			ret = axp_update(axpcharger->master, AXP_CHARGE_VBUS,0x02, 0x03);
 			if(ret)
 				printk("[AXP]Uable to set usb current set 100mA\n");
 		}

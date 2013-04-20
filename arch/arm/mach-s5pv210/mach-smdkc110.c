@@ -441,6 +441,14 @@ static struct samsung_keypad_platdata smdkv210_keypad_data __initdata = {
 #ifdef CONFIG_KEYBOARD_GPIO
 static struct gpio_keys_button gpio_buttons[] = { 
   {  
+   .gpio  = S5PV210_GPH3(7),  
+   .code  = KEY_POWER,   
+   .desc  = "key_power",  
+   .active_low = 1,  
+   .wakeup  = 1,  
+   .debounce_interval =100
+ }, 
+  {  
    .gpio  = S5PV210_GPH1(1),  
    .code  = KEY_VOLUMEUP,   
    .desc  = "volume_up",  
@@ -608,7 +616,7 @@ struct platform_device smdkv210_dm9000 = {
 #define NUM_BUFFER 4
 #endif
 
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (6144 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (10240 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1 (9900 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (6144 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 (36864 * SZ_1K)
@@ -618,7 +626,7 @@ struct platform_device smdkv210_dm9000 = {
                                              (CONFIG_FB_S3C_NR_BUFFERS + \
                                                  (CONFIG_FB_S3C_NUM_OVLY_WIN * \
                                                   CONFIG_FB_S3C_NUM_BUF_OVLY_WIN)))
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG (8192 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG (36864 * SZ_1K)
 #define  S5PV210_ANDROID_PMEM_MEMSIZE_PMEM_GPU1 (1800 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_G2D (8192 * SZ_1K)
 
@@ -1131,7 +1139,7 @@ static int wlan_carddetect(int  onoff )
 		//s5pv210_setup_sdhci1_cfg_gpio(NULL, 0);
 	//}
 	
-	//wifi_rescan(1000);
+	wifi_rescan(1000);
 	//msleep(10);
 	//gpio_set_value(WL_CD_PIN, !onoff);
 	//msleep(400);
@@ -1865,8 +1873,8 @@ static struct s3c_platform_fimc fimc_plat_lsi = {
 
 #ifdef CONFIG_VIDEO_JPEG_V2
 static struct s3c_platform_jpeg jpeg_plat __initdata = {
-	.max_main_width	= 800,
-	.max_main_height	= 480,
+	.max_main_width	= 2592,
+	.max_main_height	= 1944,
 	.max_thumb_width	= 320,
 	.max_thumb_height	= 240,
 };
