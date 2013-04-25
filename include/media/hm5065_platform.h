@@ -19,7 +19,7 @@ struct hm5065_platform_data {
 	unsigned int pixelformat;
 	int freq;	/* MCLK in Hz */
 
-	//int (*flash_onoff)(int);
+	int (*flash_onoff)(int);
 	//int (*af_assist_onoff)(int);
 	//int (*torch_onoff)(int);
 

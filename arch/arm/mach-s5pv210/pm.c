@@ -146,10 +146,19 @@ static void s5pv210_pm_prepare(void)
 	tmp |= (2 << 14);
 	__raw_writel(tmp,(S5PV210_GPH3_BASE + 0x8));
 	
+	tmp = __raw_readl(S5PV210_GPH3_BASE + 0xC);
+	tmp &= ~(3 << 14);
+	tmp |= (3 << 14);
+	__raw_writel(tmp,(S5PV210_GPH3_BASE + 0xC));
+	
 	tmp = __raw_readl(S5PV210_GPH3_BASE);
 	tmp |= 0xF0000000;
 	__raw_writel(tmp,S5PV210_GPH3_BASE);
 
+	tmp = __raw_readl(S5P_WAKEUP_MASK);
+	tmp &= ~(1 << 1 | 1 << 5);
+	__raw_writel(tmp, S5P_WAKEUP_MASK);
+	
 	tmp = __raw_readl(S5P_EINT_WAKEUP_MASK);
 	tmp &= ~(1<<31);
 	__raw_writel(tmp,S5P_EINT_WAKEUP_MASK);

@@ -14,7 +14,7 @@
 #define HM5065_PREVIEW_HEIGHT		480
 
 #define HM5065_CAPTURE_WIDTH		2592
-#define HM5065_CAPTURE_HEIGHT		1944
+#define HM5065_CAPTURE_HEIGHT		1936  //1944
 
 #define HM5065_DELAY 				0xff
 
@@ -2100,10 +2100,10 @@ static const int hm5065_init_setting_size = sizeof(hm5065_init_setting)/sizeof(H
 
 const static HM5065_REG hm5065_regs_preview[] = 
 {
-   // {0x0010, 0x02},
-    //{0x0000, 0xC8}, // delay cmd (0x0000, 0xC8)
-	//	{0x00B2, 0x50}, 
-	//	{0x00B3, 0x30},   
+    {0x0010, 0x02},
+    {0x0000, 0xC8}, // delay cmd (0x0000, 0xC8)
+		{0x00B2, 0x50}, 
+		{0x00B3, 0x30},   
     {0x00B5, 0x01},//  01=>02	35Mhz  ;01: 70MHz;02:35MHz
     {0x0030, 0x14}, //14
 		{0x0083 ,0x00},    
@@ -2119,8 +2119,8 @@ const static HM5065_REG hm5065_regs_preview[] =
     {0x0044, 0x03}, 	//	Y:600 0x03c0=960,0x0258=600
     {0x0045, 0xc0}, 	//
     
-   // {0x0010, 0x01},
-   // {0x0000, 0xC8}, // delay cmd (0x0000, 0xC8)	
+    {0x0010, 0x01},
+    {0x0000, 0xC8}, // delay cmd (0x0000, 0xC8)	
     
     {0x00E8, 0x01},//AFR
     {0x00ED, 0x0A},//Min=10ps
@@ -2131,11 +2131,11 @@ const static HM5065_REG hm5065_regs_preview[] =
 
     {0x0128, 0x00},
 
- //   {0x01FA, 0x01},
- //   {0x01A5, 0x3E},                                                                              	
-  //  {0x01A6, 0x33},                                                                              	
-  //  {0x01A7, 0x3D},
-  //  {0x01A8, 0x9A},
+    {0x01FA, 0x01},
+    {0x01A5, 0x3E},                                                                              	
+    {0x01A6, 0x33},                                                                              	
+    {0x01A7, 0x3D},
+    {0x01A8, 0x9A},
 
     {0x070A, 0x01},
 };
@@ -2146,11 +2146,11 @@ static const int hm5065_regs_preview_size = sizeof(hm5065_regs_preview)/sizeof(H
 const static HM5065_REG hm5065_regs_capture1[] =
 {
 //	{0x0010, 0x02},
-//	{0x0000, 0xC8},  //
+	{0x0000, 0xC8},  //
 //	{0x00B2, 0x4F},	
 //	{0x00B3, 0xCA},	
 	{0x00B5, 0x02},
-	{0x0030, 0x11},//14
+	{0x0030, 0x14},
 	{0x0083 ,0x01},
 	{0x0084 ,0x00},	
 	{0x0085, 0x01},	
@@ -2158,11 +2158,11 @@ const static HM5065_REG hm5065_regs_capture1[] =
 	{0x0041, 0x0A}, //0A:full size
 	{0x0042, 0x0A}, //X:2592
 	{0x0043, 0x20}, //0x0C
-	{0x0044, 0x07}, //Y:1944
-	{0x0045, 0x98}, //98//0x8C
+	{0x0044, 0x07}, //Y:1936
+	{0x0045, 0x90}, //98//0x8C
 
 //	{0x0010, 0x01},//Stream on
-//	{0x0000, 0xC8},
+	{0x0000, 0xC8},
 	
 	{0x0251, 0x01},//BLC off	
 	
@@ -2194,6 +2194,5 @@ enum
 	HM5065_AWB_MODE_MANUAL_CWF,
 	HM5065_AWB_MODE_MANUAL_CLOUDY
 };
-
 
 

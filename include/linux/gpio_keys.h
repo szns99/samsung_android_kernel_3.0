@@ -25,4 +25,28 @@ struct gpio_keys_platform_data {
 	const char *name;		/* input device name */
 };
 
+struct gpio_ops {
+	int gpio;
+	int active_level;
+};
+
+struct gpio_platform_data {
+	struct gpio_ops gps_io;
+	struct gpio_ops gps_pwr;
+	struct gpio_ops bt_io;
+	struct gpio_ops rs485_io;
+	struct gpio_ops rs485_pwr;
+	struct gpio_ops rs232_io;
+	struct gpio_ops rs232_pwr;
+	struct gpio_ops ser1_cs1;
+	struct gpio_ops ser1_cs2;
+	struct gpio_ops rf_pwr;
+	struct gpio_ops rf_rst;
+	struct gpio_ops scan_pwr;
+	struct gpio_ops scan_pwdn;
+	struct gpio_ops scan_trig;
+	struct gpio_ops scan_rst;
+};
+
+
 #endif

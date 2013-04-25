@@ -108,7 +108,7 @@ static struct hm5065_format_struct {
 		.desc		= "HM5065 5M",
 		.pixelformat	= V4L2_PIX_FMT_YUYV,
 		.width		= 2592,
-		.height		= 1944,
+		.height		= 1936,//1944
 		.resolution_width		= HM5065_CAPTURE_WIDTH,
 		.resolution_height		= HM5065_CAPTURE_HEIGHT,				
 		.fps		= 15,
@@ -237,7 +237,7 @@ struct hm5065_enum_framesize hm5065_framesize_list[] =
 {
     { HM5065_PREVIEW_VGA, HM5065_PREVIEW_WIDTH, HM5065_PREVIEW_HEIGHT },
     //{ HM5065_CAPTRUE_UXGA, HM5065_CAPTURE_WIDTH, HM5065_CAPTURE_HEIGHT }
-    { HM5065_CAPTRUE_5M, 2592, 1944}
+    { HM5065_CAPTRUE_5M, 2560, 1936}
 };
 
 static u8 af_pos_h = 0;
@@ -462,16 +462,21 @@ static int hm5065_read_regs(struct v4l2_subdev *sd, u8 *regs, u8 *val,
 
 static int hm5065_flash_control(struct v4l2_subdev *sd, int ison)
 {
-/*
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct hm5065_platform_data *pdata = client->dev.platform_data;
+
 	if(ison)
 	{
-		hm5065_i2c_reg(sd,0x3b00, 0x83);
+			//state->flash_on = true;
+			//state->flash_state_on_previous_capture = true;
+			pdata->flash_onoff(1);
 	}
 	else
 	{
-		hm5065_i2c_reg(sd,0x3b00, 3);
+		//state->flash_on = false;
+		pdata->flash_onoff(0);
 	}
-*/	
+
 	return 0;
 }
 
@@ -1400,31 +1405,35 @@ static int hm5065_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		break;
 	case V4L2_CID_CAMERA_FLASH_MODE:
 		{
-#if 0
+#if 1
 			cancel_delayed_work(&state->work);
 			state->userset.flash_mode = ctrl->value;
 			switch(ctrl->value)
 			{
 				case FLASH_MODE_OFF:
+					printk("FLASH_MODE_OFF");
 					hm5065_flash_control(sd,0);
-					mi108_set_flash_status(0);
-					setlightOn(0);
+					//mi108_set_flash_status(0);
+					//setlightOn(0);
 					state->userset.flash_lastStatus = 0;
 					break;
 				case FLASH_MODE_AUTO:
+					printk("FLASH_MODE_AUTO");
 					//mi108_set_flash_status(1);
 					schedule_delayed_work(&state->work, 500);
 					break;
 				case FLASH_MODE_ON:
+					printk("FLASH_MODE_ON");
 					//mi108_set_flash_status(1);
-					//hm5065_flash_control(sd,1);
-					mi108_set_flash_status(0);					
-					setlightOn(1);
+					hm5065_flash_control(sd,1);
+					//mi108_set_flash_status(0);					
+					//setlightOn(1);
 					state->userset.flash_lastStatus = 1;
 				 	break;
 				case FLASH_MODE_TORCH:
-					mi108_set_flash_status(0);					
-					setlightOn(1);
+					printk("FLASH_MODE_TORCH");
+					//mi108_set_flash_status(0);					
+					//setlightOn(1);
 					state->userset.flash_lastStatus = 1;
 					break;
 			}
@@ -1507,7 +1516,7 @@ static int hm5065_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
         {
             case IMAGE_EFFECT_NONE:
                 index = 0;
-                hm5065_i2c_reg(sd, 0x0380,0x00);
+          hm5065_i2c_reg(sd, 0x0380,0x00);
     			hm5065_i2c_reg(sd, 0x0381,0x00);
     			hm5065_i2c_reg(sd, 0x0382,0x00);
     			hm5065_i2c_reg(sd, 0x0384,0x00);
@@ -1515,7 +1524,7 @@ static int hm5065_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 				
             case IMAGE_EFFECT_BNW:
                 index = 1;
-                hm5065_i2c_reg(sd, 0x0380,0x00);
+          hm5065_i2c_reg(sd, 0x0380,0x00);
     			hm5065_i2c_reg(sd, 0x0381,0x00);
     			hm5065_i2c_reg(sd, 0x0382,0x00);
     			hm5065_i2c_reg(sd, 0x0384,0x05);
@@ -1523,7 +1532,7 @@ static int hm5065_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 				
             case IMAGE_EFFECT_SEPIA:
                 index = 3;
-                hm5065_i2c_reg(sd, 0x0380,0x00);
+          hm5065_i2c_reg(sd, 0x0380,0x00);
     			hm5065_i2c_reg(sd, 0x0381,0x00);
     			hm5065_i2c_reg(sd, 0x0382,0x00);
     			hm5065_i2c_reg(sd, 0x0384,0x06);
@@ -1531,7 +1540,7 @@ static int hm5065_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
           
             case IMAGE_EFFECT_NEGATIVE:
                 index = 6;
-                hm5065_i2c_reg(sd, 0x0380,0x01);
+          hm5065_i2c_reg(sd, 0x0380,0x01);
     			hm5065_i2c_reg(sd, 0x0381,0x00);
     			hm5065_i2c_reg(sd, 0x0382,0x00);
     			hm5065_i2c_reg(sd, 0x0384,0x00);
@@ -1847,6 +1856,12 @@ static int hm5065_probe(struct i2c_client *client,
 {
 	struct hm5065_state *state;
 	struct v4l2_subdev *sd;
+	struct hm5065_platform_data *pdata = client->dev.platform_data;
+	
+	if ((pdata == NULL) || (pdata->flash_onoff == NULL)) {
+		printk( "%s: bad platform data\n", __func__);
+		return -ENODEV;
+	}
 
 	state = kzalloc(sizeof(struct hm5065_state), GFP_KERNEL);
 	if (state == NULL)

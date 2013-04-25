@@ -488,6 +488,53 @@ static struct platform_device s3c_device_gpio_button = {
 };  
 #endif
 
+#if defined(CONFIG_GPIOMISC)
+#define GPIOMISC_DEV_NAME      "gpiomisc"
+
+static struct gpio_platform_data gpio_data = {  
+//##########################################
+//		GPS		BT				FUNC
+//		0			1					GPS Mode			
+//		1			0					BT Mode			
+//##########################################
+	.gps_io = {.gpio = S5PV210_GPG1(5),.active_level = 0},
+	.gps_pwr = {.gpio = S5PV210_GPJ3(4),.active_level = 1},
+	.bt_io = {.gpio = S5PV210_GPG1(6),.active_level = 0},
+//##########################################
+//		485				232				FUNC
+//		0					1					485 Mode			
+//		1					0					232 Mode			
+//##########################################
+	.rs485_io = {.gpio = S5PV210_GPH1(5),.active_level = 0},
+	.rs485_pwr = {.gpio = S5PV210_GPJ4(1),.active_level = 0},
+	.rs232_io = {.gpio = S5PV210_GPH2(7),.active_level = 0},
+	.rs232_pwr = {.gpio = S5PV210_GPH1(6),.active_level = 0},
+//##########################################
+//		CS1		CS2				FUNC
+//		0			0					invalid
+//		0			1					SCANNER	
+//		1			0					RFID	
+//		1			1					IRED	
+//##########################################
+	.ser1_cs1 = {.gpio = S5PV210_GPJ2(6),.active_level = 1},
+	.ser1_cs2 = {.gpio = S5PV210_GPJ2(7),.active_level = 1},
+	.rf_pwr = {.gpio = S5PV210_GPJ2(1),.active_level = 0},
+	.rf_rst = {.gpio = S5PV210_GPH2(2),.active_level = 0},
+	.scan_pwr = {.gpio = S5PV210_GPJ2(0),.active_level = 1},
+	.scan_pwdn = {.gpio = S5PV210_GPH2(4),.active_level = 0},
+	.scan_trig = {.gpio = S5PV210_GPH2(5),.active_level = 0},
+	.scan_rst = {.gpio = S5PV210_GPH2(6),.active_level = 0}
+};  
+  
+static struct platform_device s3c_device_gpio_misc = {  
+ .name  = GPIOMISC_DEV_NAME,  
+ .id  = -1,  
+ .dev  = {  
+  .platform_data = &gpio_data
+ }  
+};  
+#endif
+
 #if defined(CONFIG_MT8630)
 static int mt8630_io_init(void)
 {
@@ -874,7 +921,9 @@ static struct s3c_platform_fb lte480wv_fb_data __initdata = {
         .reset_lcd      = lte480wv_reset_lcd,
 };
 
-static struct pwm_device *ir_led_pwm;
+struct pwm_device *ir_led_pwm;
+
+EXPORT_SYMBOL(ir_led_pwm);
 
 static void ir_led_pwm_init(void)
 {
@@ -918,6 +967,8 @@ static int smdkv210_backlight_init(struct device *dev)
 	}
 
 	/* Configure GPIO pin with S5PV210_GPD_0_0_TOUT_0 */
+	s5p_gpio_set_drvstr(S5PV210_GPD0(0),S5P_GPIO_DRVSTR_LV4);
+	s3c_gpio_setpull(S5PV210_GPD0(0), S3C_GPIO_PULL_NONE);
 	s3c_gpio_cfgpin(S5PV210_GPD0(0), S3C_GPIO_SFN(2));
 	gpio_free(S5PV210_GPD0(0));
 
@@ -1199,6 +1250,9 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 #ifdef CONFIG_KEYBOARD_GPIO
 	&s3c_device_gpio_button,
 #endif
+#ifdef CONFIG_GPIOMISC
+	&s3c_device_gpio_misc,
+#endif
 #ifdef CONFIG_TOUCHSCREEN_EGALAX
 	&s3c_device_i2c5,
 #endif
@@ -1288,104 +1342,22 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 #ifdef CAM_ITU_CH_A
 static int smdkv210_cam0_power(int onoff)
 {
-	int err;
-	/* Camera A */
-	err = gpio_request(GPIO_PS_VOUT, "GPH0");
-	if (err)
-		printk(KERN_ERR "failed to request GPH0 for CAM_2V8\n");
-
-	s3c_gpio_setpull(GPIO_PS_VOUT, S3C_GPIO_PULL_NONE);
-	gpio_direction_output(GPIO_PS_VOUT, 0);
-	gpio_direction_output(GPIO_PS_VOUT, 1);
-	gpio_free(GPIO_PS_VOUT);
-
 	return 0;
 }
 #else
 static int smdkv210_cam1_power(int onoff)
 {
-	int err;
-
-	/* S/W workaround for the SMDK_CAM4_type board
-	 * When SMDK_CAM4 type module is initialized at power reset,
-	 * it needs the cam_mclk.
-	 *
-	 * Now cam_mclk is set as below, need only set the gpio mux.
-	 * CAM_SRC1 = 0x0006000, CLK_DIV1 = 0x00070400.
-	 * cam_mclk source is SCLKMPLL, and divider value is 8.
-	*/
-
-	/* gpio mux select the cam_mclk */
-	err = gpio_request(GPIO_PS_ON, "GPJ1");
-	if (err)
-		printk(KERN_ERR "failed to request GPJ1 for CAM_2V8\n");
-
-	s3c_gpio_setpull(GPIO_PS_ON, S3C_GPIO_PULL_NONE);
-	s3c_gpio_cfgpin(GPIO_PS_ON, (0x3<<16));
-
-
-	/* Camera B */
-/*
- * acquire the gpio
- */
-	err = gpio_request(GPIO_BUCK_1_EN_A, "GPH0");
-	if (err)
-		printk(KERN_ERR "failed to request GPH0 for CAM_2V8\n");
-
-	s3c_gpio_setpull(GPIO_BUCK_1_EN_A, S3C_GPIO_PULL_NONE);
-/*
- * set the direction of the GPQ as output and write the data
- */
-	gpio_direction_output(GPIO_BUCK_1_EN_A, 0);
-	gpio_direction_output(GPIO_BUCK_1_EN_A, 1);
-
-	udelay(1000);
-/*
- * release the acquired GPQ(1) gpio
- */
-
-	gpio_free(GPIO_PS_ON);
-	gpio_free(GPIO_BUCK_1_EN_A);
-
 	return 0;
 }
 #endif
 
 static int s5k5ba_power_en(int onoff)
 {
-	if (onoff) {
-#ifdef CAM_ITU_CH_A
-		smdkv210_cam0_power(onoff);
-#else
-		smdkv210_cam1_power(onoff);
-#endif
-	} else {
-#ifdef CAM_ITU_CH_A
-		smdkv210_cam0_power(onoff);
-#else
-		smdkv210_cam1_power(onoff);
-#endif
-	}
-
 	return 0;
 }
 
 static int ov5640_power_en(int onoff)
 {
-		if (onoff) {
-#ifdef CAM_ITU_CH_A
-		smdkv210_cam0_power(onoff);
-#else
-		smdkv210_cam1_power(onoff);
-#endif
-	} else {
-#ifdef CAM_ITU_CH_A
-		smdkv210_cam0_power(onoff);
-#else
-		smdkv210_cam1_power(onoff);
-#endif
-	}
-
 	return 0;
 }
 
@@ -1524,47 +1496,18 @@ static void hm5065_init(void)
 /* Set for MIPI-CSI Camera module Power Enable */
 static int smdkv210_mipi_cam_pwr_en(int enabled)
 {
-	int err;
-
-	err = gpio_request(S5PV210_GPH1(2), "GPH1");
-	if (err)
-		printk(KERN_ERR "#### failed to request(GPH1)for CAM_2V8\n");
-
-	s3c_gpio_setpull(S5PV210_GPH1(2), S3C_GPIO_PULL_NONE);
-	gpio_direction_output(S5PV210_GPH1(2), enabled);
-	gpio_free(S5PV210_GPH1(2));
-
 	return 0;
 }
 
 /* Set for MIPI-CSI Camera module Reset */
 static int smdkv210_mipi_cam_rstn(int enabled)
 {
-	int err;
-
-	err = gpio_request(S5PV210_GPH0(3), "GPH0");
-	if (err)
-		printk(KERN_ERR "#### failed to reset(GPH0) for MIPI CAM\n");
-
-	s3c_gpio_setpull(S5PV210_GPH0(3), S3C_GPIO_PULL_NONE);
-	gpio_direction_output(S5PV210_GPH0(3), enabled);
-	gpio_free(S5PV210_GPH0(3));
-
 	return 0;
 }
 
 /* MIPI-CSI Camera module Power up/down sequence */
 static int smdkv210_mipi_cam_power(int on)
 {
-	if (on) {
-		smdkv210_mipi_cam_pwr_en(1);
-		mdelay(5);
-		smdkv210_mipi_cam_rstn(1);
-	} else {
-		smdkv210_mipi_cam_rstn(0);
-		mdelay(5);
-		smdkv210_mipi_cam_pwr_en(0);
-	}
 	return 0;
 }
 #endif
@@ -3412,62 +3355,6 @@ void OTM8018B_HSD50_RGB_mode(void)
 }
 #endif
 
-struct class *sec_class;
-EXPORT_SYMBOL(sec_class);
-
-#define GPIO_SCANNER_TRIGGER S5PV210_GPC1(1)
-#define GPIO_SCANNER_PWR_EN S5PV210_GPJ2(0)
-
-static void scanner_gpio_init(void)
-{
-	int err;
-	struct device *scanner_dev;
-	sec_class = class_create(THIS_MODULE, "jiebao");
-
-	scanner_dev = device_create(sec_class, NULL, 0, NULL, "scanner");
-	if (IS_ERR(scanner_dev)) {
-		pr_err("Failed to create device(scanner)!\n");
-		goto err;
-	}
-
-	gpio_request(GPIO_SCANNER_TRIGGER, "SCANNER_TRIGGER");
-	s3c_gpio_setpull(GPIO_SCANNER_TRIGGER, S3C_GPIO_PULL_NONE);
-	s3c_gpio_cfgpin(GPIO_SCANNER_TRIGGER, S3C_GPIO_OUTPUT);
-	gpio_direction_output(GPIO_SCANNER_TRIGGER, 1);
-
-	gpio_request(GPIO_SCANNER_PWR_EN, "SCANNER_PWR_EN");
-	s3c_gpio_setpull(GPIO_SCANNER_PWR_EN, S3C_GPIO_PULL_NONE);
-	s3c_gpio_cfgpin(GPIO_SCANNER_PWR_EN, S3C_GPIO_OUTPUT);
-	gpio_direction_output(GPIO_SCANNER_PWR_EN, 0);
-
-	gpio_export(GPIO_SCANNER_TRIGGER, 0);
-	gpio_export(GPIO_SCANNER_PWR_EN, 0);
-
-	gpio_export_link(scanner_dev, "trigger", GPIO_SCANNER_TRIGGER);
-	gpio_export_link(scanner_dev, "power_en", GPIO_SCANNER_PWR_EN);
-
- err:
-	return;
-}
-
-#define GPIO_GPS_nRST S5PV210_GPJ3(5)
-#define GPIO_GPS_ENABLE S5PV210_GPJ3(6)
-
-static void gps_gpio_init(void)
-{
-	gpio_request(GPIO_GPS_nRST, "GPS_nRST");
-	s3c_gpio_setpull(GPIO_GPS_nRST, S3C_GPIO_PULL_NONE);
-	s3c_gpio_cfgpin(GPIO_GPS_nRST, S3C_GPIO_OUTPUT);
-	gpio_direction_output(GPIO_GPS_nRST, 1);
-
-	gpio_request(GPIO_GPS_ENABLE, "GPS_PWR_EN");
-	s3c_gpio_setpull(GPIO_GPS_ENABLE, S3C_GPIO_PULL_NONE);
-	s3c_gpio_cfgpin(GPIO_GPS_ENABLE, S3C_GPIO_OUTPUT);
-	gpio_direction_output(GPIO_GPS_ENABLE, 0);
-	mdelay(10);
-	gpio_direction_output(GPIO_GPS_ENABLE, 1);
-}
-
 static void __init smdkv210_machine_init(void)
 {
 	s3c_pm_init();
@@ -3566,8 +3453,6 @@ static void __init smdkv210_machine_init(void)
         clk_xusbxti.rate = 24000000;
 	smdkc110_setup_clocks(); 
 	
-	scanner_gpio_init();
-	gps_gpio_init();
 	//ov5640_init();
 	hm5065_init();
 #if 0	

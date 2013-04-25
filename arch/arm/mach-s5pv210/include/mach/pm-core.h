@@ -33,6 +33,8 @@ static inline void s3c_pm_arch_stop_clocks(void)
 
 static inline void s3c_pm_arch_show_resume_irqs(void)
 {
+	printk( "S5P_WAKEUP_STAT 0x%X\n", __raw_readl(S5P_WAKEUP_STAT));
+	printk("%s: s3c_irqwake_eintmask = 0x%x \n",__func__,__raw_readl(S5P_EINT_WAKEUP_MASK));
 	/* nothing here yet */
 }
 
