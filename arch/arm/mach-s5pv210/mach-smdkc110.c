@@ -983,8 +983,9 @@ static void smdkv210_backlight_exit(struct device *dev)
 
 static struct platform_pwm_backlight_data smdkv210_backlight_data = {
 	.pwm_id		= 0,
-	.max_brightness	= 100,
-	.dft_brightness	= 80,
+	.min_brightness	= 64,
+	.max_brightness	= 255,
+	.dft_brightness	= 192,
 	.pwm_period_ns	= 30000,
 	.init		= smdkv210_backlight_init,
 	.exit		= smdkv210_backlight_exit,
@@ -1500,7 +1501,7 @@ static void hm5065_init(void)
 	{
 		s3c_gpio_cfgpin(GPIO_CAM_FLASH_EN, S3C_GPIO_OUTPUT);
 		s3c_gpio_setpull(GPIO_CAM_FLASH_EN, S3C_GPIO_PULL_NONE);
-		gpio_direction_output(GPIO_CAM_FLASH_EN, 1);
+		gpio_direction_output(GPIO_CAM_FLASH_EN, 0);
 	}
 }
 
@@ -3478,13 +3479,14 @@ static void __init smdkv210_machine_init(void)
 	    s3c_gpio_cfgpin(WL_POWER_CTRL, S3C_GPIO_SFN(1));
 	    s3c_gpio_setpull(WL_POWER_CTRL, S3C_GPIO_PULL_NONE);
 	}
+	/*
 	if (!gpio_request(WL_POWER, "WL_POWER")) {
 	    gpio_direction_output(WL_POWER, 1);
 	    s3c_gpio_cfgpin(WL_POWER, S3C_GPIO_SFN(1));
 	    s3c_gpio_setpull(WL_POWER, S3C_GPIO_PULL_NONE);
 	}
 	if (!gpio_request(WL_RESET, "WL_RESET")) {
-	    gpio_direction_output(WL_RESET, 0);
+	    gpio_direction_output(WL_RESET, 1);
 	    s3c_gpio_cfgpin(WL_RESET, S3C_GPIO_SFN(1));
 	    s3c_gpio_setpull(WL_RESET, S3C_GPIO_PULL_NONE);
 	}
@@ -3513,7 +3515,7 @@ static void __init smdkv210_machine_init(void)
 	    s3c_gpio_cfgpin(S5PV210_GPJ2(2), S3C_GPIO_SFN(1));
 	    s3c_gpio_setpull(S5PV210_GPJ2(2), S3C_GPIO_PULL_NONE);
 	}
-	
+	*/
 	s3c_gpio_cfgpin(S5PV210_GPE1(3), S5PV210_GPE1_3_CAM_A_CLKOUT);
 	
 	wifi_card_set_power(1);

@@ -26,47 +26,40 @@ struct pwm_bl_data {
 	struct pwm_device	*pwm;
 	struct device		*dev;
 	unsigned int		period;
+	unsigned int		min_brightness;
+	unsigned int		max_brightness;
 	unsigned int		lth_brightness;
 	int			(*notify)(struct device *,
 					  int brightness);
 	int			(*check_fb)(struct device *, struct fb_info *);
 };
+static int suspend_flag = 0;
 
 static int pwm_backlight_update_status(struct backlight_device *bl)
 {
 	struct pwm_bl_data *pb = dev_get_drvdata(&bl->dev);
-	int brightness = pb->lth_brightness;
-	int max = bl->props.max_brightness;
-	DBG("%s-----%d--------pb->lth_brightness=%d\n",__func__,__LINE__,pb->lth_brightness);
+	int brightness,cur_brightness = bl->props.brightness;
+	int min = pb->min_brightness;
+	int max = pb->max_brightness;
+	DBG("%s-----%d--------cur_brightness=%d\n",__func__,__LINE__,cur_brightness);
 
-	if (bl->props.power != FB_BLANK_UNBLANK)
-		brightness = 0;
+	if (suspend_flag)
+		return 0;
 
-	if (bl->props.fb_blank != FB_BLANK_UNBLANK)
-		brightness = 0;
-
-	if (pb->notify)
-		brightness = pb->notify(pb->dev, brightness);
-
-	if (brightness == 0) {
-		pwm_config(pb->pwm, 0, pb->period);
-		pwm_disable(pb->pwm);
-	} else {
-		brightness = brightness > max ? max : brightness;
-		brightness = brightness * (pb->period/ max);
-		pwm_config(pb->pwm, brightness, pb->period);
-		pb->lth_brightness=brightness*max/pb->period;
-		DBG("%s-----%d--------pb->lth_brightness=%d\n",__func__,__LINE__,pb->lth_brightness);
-		pwm_enable(pb->pwm);
-	}
+	cur_brightness = cur_brightness < 0 ? 0 : cur_brightness;
+	cur_brightness = cur_brightness > max ? max : cur_brightness;
+	brightness = (max-min)*cur_brightness/255+min;
+	brightness = brightness * pb->period/255;
+	pwm_config(pb->pwm, brightness, pb->period);
+	pb->lth_brightness=cur_brightness;
+	pwm_enable(pb->pwm);
 	return 0;
 }
 
 static int pwm_backlight_get_brightness(struct backlight_device *bl)
 {
 	struct pwm_bl_data *pb = dev_get_drvdata(&bl->dev);
-	int brightness = pb->lth_brightness;
-	return brightness;
+	return pb->lth_brightness;
 }
 
 static int pwm_backlight_check_fb(struct backlight_device *bl,
@@ -112,9 +105,9 @@ static int pwm_backlight_probe(struct platform_device *pdev)
 	pb->period = data->pwm_period_ns;
 	pb->notify = data->notify;
 	pb->check_fb = data->check_fb;
-	//pb->lth_brightness = data->lth_brightness *
-	//	(data->pwm_period_ns / data->max_brightness);
 	pb->dev = &pdev->dev;
+	pb->min_brightness = data->min_brightness;
+	pb->max_brightness = data->max_brightness;
 
 	pb->pwm = pwm_request(data->pwm_id, "backlight");
 	if (IS_ERR(pb->pwm)) {
@@ -126,7 +119,7 @@ static int pwm_backlight_probe(struct platform_device *pdev)
 
 	memset(&props, 0, sizeof(struct backlight_properties));
 	props.type = BACKLIGHT_RAW;
-	props.max_brightness = data->max_brightness;
+	props.max_brightness = 255;
 	bl = backlight_device_register(dev_name(&pdev->dev), &pdev->dev, pb,
 				       &pwm_backlight_ops, &props);
 	if (IS_ERR(bl)) {
@@ -137,7 +130,7 @@ static int pwm_backlight_probe(struct platform_device *pdev)
 
 	bl->props.power = FB_BLANK_UNBLANK;
 	bl->props.fb_blank = FB_BLANK_UNBLANK;
-	pb->lth_brightness = data->dft_brightness;
+	bl->props.brightness = pb->lth_brightness = data->dft_brightness;
 	platform_set_drvdata(pdev, bl);
 	dev_set_drvdata(&bl->dev,pb);
 	backlight_update_status(bl);
@@ -181,6 +174,7 @@ static int pwm_backlight_suspend(struct platform_device *pdev,
 		pb->notify(pb->dev, 0);
 	pwm_config(pb->pwm, 0, pb->period);
 	pwm_disable(pb->pwm);
+	suspend_flag = 1;
 	return 0;
 }
 
@@ -188,6 +182,7 @@ static int pwm_backlight_resume(struct platform_device *pdev)
 {
 	struct backlight_device *bl = platform_get_drvdata(pdev);
 
+	suspend_flag = 0;
 	backlight_update_status(bl);
 	return 0;
 }
