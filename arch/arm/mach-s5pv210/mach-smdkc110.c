@@ -3479,7 +3479,7 @@ static void __init smdkv210_machine_init(void)
 	    s3c_gpio_cfgpin(WL_POWER_CTRL, S3C_GPIO_SFN(1));
 	    s3c_gpio_setpull(WL_POWER_CTRL, S3C_GPIO_PULL_NONE);
 	}
-	/*
+	
 	if (!gpio_request(WL_POWER, "WL_POWER")) {
 	    gpio_direction_output(WL_POWER, 1);
 	    s3c_gpio_cfgpin(WL_POWER, S3C_GPIO_SFN(1));
@@ -3509,13 +3509,13 @@ static void __init smdkv210_machine_init(void)
 	    s3c_gpio_cfgpin(BT_RESET, S3C_GPIO_SFN(1));
 	    s3c_gpio_setpull(BT_RESET, S3C_GPIO_PULL_NONE);
 	}
+	
 
 	if (!gpio_request(S5PV210_GPJ2(2), "AUDIO_PWR_CTR")) {
 	    gpio_direction_output(S5PV210_GPJ2(2), 0);
 	    s3c_gpio_cfgpin(S5PV210_GPJ2(2), S3C_GPIO_SFN(1));
 	    s3c_gpio_setpull(S5PV210_GPJ2(2), S3C_GPIO_PULL_NONE);
 	}
-	*/
 	s3c_gpio_cfgpin(S5PV210_GPE1(3), S5PV210_GPE1_3_CAM_A_CLKOUT);
 	
 	wifi_card_set_power(1);
