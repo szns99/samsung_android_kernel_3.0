@@ -155,7 +155,6 @@ dhd_common_init(void)
 #else
 	nv_path[0] = '\0';
 #endif
-     printk("fw_path=%s--nv_path=%s\r\n",fw_path,nv_path);
 }
 
 static int

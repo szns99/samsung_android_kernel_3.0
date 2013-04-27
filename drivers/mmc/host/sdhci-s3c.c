@@ -476,7 +476,7 @@ static int __devinit sdhci_s3c_probe(struct platform_device *pdev)
 				IRQF_SHARED, mmc_hostname(host->mmc), sc);
 	}
 	
-	if(pdev->id == 0)
+	if(pdev->id == 3)
 		host_wifi = host;
 
 	return 0;

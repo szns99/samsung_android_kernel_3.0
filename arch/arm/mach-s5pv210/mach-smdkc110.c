@@ -663,9 +663,9 @@ struct platform_device smdkv210_dm9000 = {
 #define NUM_BUFFER 4
 #endif
 
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (10240 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (24576 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1 (9900 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (6144 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (24576 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 (36864 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 (36864 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMD (S5PV210_LCD_WIDTH * \
@@ -673,7 +673,7 @@ struct platform_device smdkv210_dm9000 = {
                                              (CONFIG_FB_S3C_NR_BUFFERS + \
                                                  (CONFIG_FB_S3C_NUM_OVLY_WIN * \
                                                   CONFIG_FB_S3C_NUM_BUF_OVLY_WIN)))
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG (36864 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG (24576 * SZ_1K)
 #define  S5PV210_ANDROID_PMEM_MEMSIZE_PMEM_GPU1 (1800 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_G2D (8192 * SZ_1K)
 
@@ -1127,28 +1127,28 @@ void wifi_card_set_power(unsigned int power_mode)
 		s3c_gpio_setpull(WL_WAKE,  S3C_GPIO_PULL_NONE);
 		gpio_set_value(WL_WAKE,  0);
 
-		//wlan reset: output ,1
-		s3c_gpio_cfgpin(WL_RESET,  S3C_GPIO_OUTPUT);
-		s3c_gpio_setpull(WL_RESET, S3C_GPIO_PULL_NONE);
-		gpio_set_value(WL_RESET, 1);
-
 		//wlan power:output ,1
 		s3c_gpio_cfgpin(WL_POWER, S3C_GPIO_OUTPUT);
 		s3c_gpio_setpull(WL_POWER, S3C_GPIO_PULL_NONE);
 		gpio_set_value(WL_POWER, 1);
 
 		//bt power
-		//s3c_gpio_cfgpin(BT_POWER, S3C_GPIO_OUTPUT);
-		//s3c_gpio_setpull(BT_POWER, S3C_GPIO_PULL_NONE);
-		//gpio_set_value(BT_POWER, 1);
-	} else {
+		s3c_gpio_cfgpin(BT_POWER, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(BT_POWER, S3C_GPIO_PULL_NONE);
+		gpio_set_value(BT_POWER, 1);
+
+		//wlan reset: output ,1
+		s3c_gpio_cfgpin(WL_RESET,  S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(WL_RESET, S3C_GPIO_PULL_NONE);
+		//gpio_set_value(WL_RESET, 0);
+		//msleep(10);
+		gpio_set_value(WL_RESET, 1);
+	} 
+	else 
+	{
 		gpio_set_value(WL_RESET, 0);
-#if 0
-		if (!gpio_get_value(BT_RESET) ) {
-			gpio_set_value(BT_POWER, 0);
-			gpio_set_value(WL_POWER, 0);
-		}
-#endif
+		gpio_set_value(BT_POWER, 0);
+		gpio_set_value(WL_POWER, 0);
 	}
 }
 
@@ -1490,6 +1490,18 @@ static void hm5065_init(void)
 		s3c_gpio_setpull(CAMERA_POWER_PIN, S3C_GPIO_PULL_NONE);
 		gpio_direction_output(CAMERA_POWER_PIN, 0);
 	}
+	
+	err = gpio_request(GPIO_CAM_FLASH_EN, "GPIO_CAM_FLASH_EN");
+	if (err)
+	{
+		printk(KERN_ERR "failed to request GPJ3(3) for GPIO_CAM_FLASH_EN\n");
+	}
+	else
+	{
+		s3c_gpio_cfgpin(GPIO_CAM_FLASH_EN, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(GPIO_CAM_FLASH_EN, S3C_GPIO_PULL_NONE);
+		gpio_direction_output(GPIO_CAM_FLASH_EN, 1);
+	}
 }
 
 #ifdef CONFIG_VIDEO_S5K4EA
@@ -1513,12 +1525,18 @@ static int smdkv210_mipi_cam_power(int on)
 #endif
 
 #ifdef CONFIG_VIDEO_HM5065
+static int flashForHM5065(int en)
+{
+	gpio_set_value(GPIO_CAM_FLASH_EN,en);
+	return 0;
+}
+
 static struct hm5065_platform_data hm5065_plat = {
 	.default_width = 640,
 	.default_height = 480,
 	.pixelformat = V4L2_PIX_FMT_UYVY,
 	.freq = 24000000,
-//	.flash_onoff = flashFor4ecgx,
+	.flash_onoff = flashForHM5065,
 //	.af_assist_onoff = flashFor4ecgx,
 //	.torch_onoff = flashFor4ecgx,
 	.is_mipi = 0,
@@ -1538,7 +1556,7 @@ static struct s3c_platform_camera hm5065 = {
 	.type		= CAM_TYPE_ITU,
 	.fmt		= ITU_601_YCBCR422_8BIT,
 	.order422	= CAM_ORDER422_8BIT_YCBYCR,
-	.i2c_busnum	= 0,
+	.i2c_busnum	= 1,
 	.info		= &hm5065_i2c_info,
 	.pixelformat	= V4L2_PIX_FMT_UYVY,
 	.srclk_name	= "mout_mpll",
@@ -1817,7 +1835,7 @@ static struct s3c_platform_fimc fimc_plat_lsi = {
 #ifdef CONFIG_VIDEO_JPEG_V2
 static struct s3c_platform_jpeg jpeg_plat __initdata = {
 	.max_main_width	= 2592,
-	.max_main_height	= 1944,
+	.max_main_height	= 1936,
 	.max_thumb_width	= 320,
 	.max_thumb_height	= 240,
 };
@@ -3455,26 +3473,41 @@ static void __init smdkv210_machine_init(void)
 	
 	//ov5640_init();
 	hm5065_init();
-#if 0	
-	if (!gpio_request(S5PV210_GPJ4(4), "WIFI_PWR")) {
-	    gpio_direction_output(S5PV210_GPJ4(4), 1);
-	    s3c_gpio_cfgpin(S5PV210_GPJ4(4), S3C_GPIO_SFN(1));
-	    s3c_gpio_setpull(S5PV210_GPJ4(4), S3C_GPIO_PULL_NONE);
+	if (!gpio_request(WL_POWER_CTRL, "WL_POWER_CTRL")) {
+	    gpio_direction_output(WL_POWER_CTRL, 1);
+	    s3c_gpio_cfgpin(WL_POWER_CTRL, S3C_GPIO_SFN(1));
+	    s3c_gpio_setpull(WL_POWER_CTRL, S3C_GPIO_PULL_NONE);
 	}
-	if (!gpio_request(S5PV210_GPJ4(3), "WIFI_PDN")) {
-	    gpio_direction_output(S5PV210_GPJ4(3), 1);
-	    s3c_gpio_cfgpin(S5PV210_GPJ4(3), S3C_GPIO_SFN(1));
-	    s3c_gpio_setpull(S5PV210_GPJ4(3), S3C_GPIO_PULL_NONE);
+	if (!gpio_request(WL_POWER, "WL_POWER")) {
+	    gpio_direction_output(WL_POWER, 1);
+	    s3c_gpio_cfgpin(WL_POWER, S3C_GPIO_SFN(1));
+	    s3c_gpio_setpull(WL_POWER, S3C_GPIO_PULL_NONE);
 	}
-	if (!gpio_request(S5PV210_GPJ4(2), "WIFI_RST")) {
-	    gpio_direction_output(S5PV210_GPJ4(2), 1);
-	    s3c_gpio_cfgpin(S5PV210_GPJ4(2), S3C_GPIO_SFN(1));
-	    s3c_gpio_setpull(S5PV210_GPJ4(2), S3C_GPIO_PULL_NONE);
-	    msleep(100);
-	    gpio_direction_output(S5PV210_GPJ4(2),1);
+	if (!gpio_request(WL_RESET, "WL_RESET")) {
+	    gpio_direction_output(WL_RESET, 0);
+	    s3c_gpio_cfgpin(WL_RESET, S3C_GPIO_SFN(1));
+	    s3c_gpio_setpull(WL_RESET, S3C_GPIO_PULL_NONE);
 	}
-#endif	
-	
+	if (!gpio_request(WL_WAKE, "WL_WAKE")) {
+	    gpio_direction_output(WL_WAKE, 0);
+	    s3c_gpio_cfgpin(WL_WAKE, S3C_GPIO_SFN(1));
+	    s3c_gpio_setpull(WL_WAKE, S3C_GPIO_PULL_NONE);
+	}
+	if (!gpio_request(WL_HOST_WAKE, "WL_HOST_WAKE")) {
+	    s3c_gpio_cfgpin(WL_HOST_WAKE, S3C_GPIO_SFN(0));
+	    s3c_gpio_setpull(WL_RESET, S3C_GPIO_PULL_NONE);
+	}
+	if (!gpio_request(BT_POWER, "BT_POWER")) {
+	    gpio_direction_output(BT_POWER, 0);
+	    s3c_gpio_cfgpin(BT_POWER, S3C_GPIO_SFN(1));
+	    s3c_gpio_setpull(BT_POWER, S3C_GPIO_PULL_NONE);
+	}
+	if (!gpio_request(BT_RESET, "BT_RESET")) {
+	    gpio_direction_output(BT_RESET, 0);
+	    s3c_gpio_cfgpin(BT_RESET, S3C_GPIO_SFN(1));
+	    s3c_gpio_setpull(BT_RESET, S3C_GPIO_PULL_NONE);
+	}
+
 	if (!gpio_request(S5PV210_GPJ2(2), "AUDIO_PWR_CTR")) {
 	    gpio_direction_output(S5PV210_GPJ2(2), 0);
 	    s3c_gpio_cfgpin(S5PV210_GPJ2(2), S3C_GPIO_SFN(1));

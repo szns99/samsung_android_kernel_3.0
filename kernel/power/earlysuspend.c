@@ -109,8 +109,8 @@ static void early_suspend(struct work_struct *work)
 	sys_sync();
 abort:
 	spin_lock_irqsave(&state_lock, irqflags);
-	if (state == SUSPEND_REQUESTED_AND_SUSPENDED)
-		wake_unlock(&main_wake_lock);
+	//if (state == SUSPEND_REQUESTED_AND_SUSPENDED)
+	//	wake_unlock(&main_wake_lock);
 	spin_unlock_irqrestore(&state_lock, irqflags);
 }
 
