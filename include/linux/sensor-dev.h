@@ -52,7 +52,9 @@ enum sensor_id {
 	ACCEL_ID_ADXL34X,
 	ACCEL_ID_MMA8450,
 	ACCEL_ID_MMA845X,
+	ACCEL_ID_MMA7660,
 	ACCEL_ID_MPU6050,
+	ACCEL_ID_MXC6225,
 
 	COMPASS_ID_ALL,
 	COMPASS_ID_AK8975,
@@ -76,55 +78,20 @@ enum sensor_id {
 	LIGHT_ID_CM3217,
 	LIGHT_ID_AL3006,
 	LIGHT_ID_STK3171,
+	LIGHT_ID_ISL29023,
+	LIGHT_ID_AP321XX,
 	
 	PROXIMITY_ID_ALL,
 	PROXIMITY_ID_AL3006,
 	PROXIMITY_ID_STK3171,
+	PROXIMITY_ID_AP321XX,
 	TEMPERATURE_ID_ALL,
 
 	PRESSURE_ID_ALL,
 	PRESSURE_ID_BMA085,
+	SENSOR_NUM_ID,
 };
 
-struct gsensor_platform_data {
-	u16 model;
-	u16 swap_xy;
-	u16 swap_xyz;
-	signed char orientation[9];
-	int (*get_pendown_state)(void);
-	int (*init_platform_hw)(void);
-	int (*gsensor_platform_sleep)(void);
-	int (*gsensor_platform_wakeup)(void);
-	void (*exit_platform_hw)(void);
-};
-
-
-//struct akm8975_platform_data {
-//	short m_layout[4][3][3];
-//	char project_name[64];
-//	int gpio_DRDY;
-//};
-
-struct sensor_platform_data {
-	int type;
-	int irq;
-	int power_pin;
-	int reset_pin;
-	int irq_enable;         //if irq_enable=1 then use irq else use polling  
-	int poll_delay_ms;      //polling
-	int x_min;              //filter
-	int y_min;
-	int z_min;
-	int factory;
-	unsigned char address;
-	signed char orientation[9];
-	short m_layout[4][3][3];
-	char project_name[64];
-	int (*init_platform_hw)(void);
-	void (*exit_platform_hw)(void);
-	int (*power_on)(void);
-	int (*power_off)(void);
-};
 
 struct sensor_axis {
 	int x;
@@ -137,6 +104,7 @@ struct sensor_operate {
 	int type;
 	int	id_i2c;
 	int	range[2];
+	int 	brightness[2];//backlight min_brightness max_brightness 
 	int read_reg;
 	int read_len;
 	int id_reg;
@@ -185,6 +153,39 @@ struct sensor_private_data {
 #endif
 };
 
+struct gsensor_platform_data {
+	u16 model;
+	u16 swap_xy;
+	u16 swap_xyz;
+	signed char orientation[9];
+	int (*get_pendown_state)(void);
+	int (*init_platform_hw)(void);
+	int (*gsensor_platform_sleep)(void);
+	int (*gsensor_platform_wakeup)(void);
+	void (*exit_platform_hw)(void);
+};
+
+
+struct sensor_platform_data {
+	int type;
+	int irq;
+	int power_pin;
+	int reset_pin;
+	int irq_enable;         //if irq_enable=1 then use irq else use polling  
+	int poll_delay_ms;      //polling
+	int x_min;              //filter
+	int y_min;
+	int z_min;
+	int factory;
+	unsigned char address;
+	signed char orientation[9];
+	short m_layout[4][3][3];
+	char project_name[64];
+	int (*init_platform_hw)(void);
+	void (*exit_platform_hw)(void);
+	int (*power_on)(void);
+	int (*power_off)(void);
+};
 
 extern int sensor_register_slave(int type,struct i2c_client *client,
 			struct sensor_platform_data *slave_pdata,

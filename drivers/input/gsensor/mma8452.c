@@ -736,7 +736,7 @@ static int mma8452_init_client(struct i2c_client *client)
 static int  mma8452_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
 	struct mma8452_data *mma8452;
-	struct sensor_platform_data *pdata = pdata = client->dev.platform_data;
+	struct gsensor_platform_data *pdata = pdata = client->dev.platform_data;
 	int err;
 
 	mmaprintkf("%s enter\n",__FUNCTION__);

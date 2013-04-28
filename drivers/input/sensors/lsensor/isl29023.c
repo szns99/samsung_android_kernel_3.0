@@ -39,54 +39,45 @@
 #define DBG(x...)
 #endif
 
-#define ALS_CMD 	0x01
-#define ALS_DT1		0x02
-#define ALS_DT2		0X03
-#define ALS_THDH1	0X04
-#define ALS_THDH2	0X05
-#define ALS_THDL1	0X06
-#define ALS_THDL2	0X07
-#define STA_TUS		0X08
-#define PS_CMD		0X09
-#define PS_DT		0X0A
-#define PS_THDH		0X0B
-#define PS_THDL		0X0C
-#define SW_RESET	0X80
+#define ISL29023_REG_ADD_COMMAND1	0x00
+#define COMMMAND1_OPMODE_SHIFT		5
+#define COMMMAND1_OPMODE_MASK		(7 << COMMMAND1_OPMODE_SHIFT)
+#define COMMMAND1_OPMODE_POWER_DOWN	(0 << COMMMAND1_OPMODE_SHIFT)
+#define COMMMAND1_OPMODE_ALS_ONCE	(1 << COMMMAND1_OPMODE_SHIFT)
+#define COMMMAND1_OPMODE_IR_ONCE	(2 << COMMMAND1_OPMODE_SHIFT)
+#define COMMMAND1_OPMODE_ALS_CONTINUE	(5 << COMMMAND1_OPMODE_SHIFT)
+#define COMMMAND1_OPMODE_IR_CONTINUE	(6 << COMMMAND1_OPMODE_SHIFT)
 
-//ALS_CMD
-#define ALS_SD_ENABLE	(0<<0)
-#define ALS_SD_DISABLE	(1<<0)
-#define ALS_INT_DISABLE	(0<<1)
-#define ALS_INT_ENABLE	(1<<1)
-#define ALS_1T_100MS	(0<<2)
-#define ALS_2T_200MS	(1<<2)
-#define ALS_4T_400MS	(2<<2)
-#define ALS_8T_800MS	(3<<2)
-#define ALS_RANGE_57671	(0<<6)
-#define ALS_RANGE_28836	(1<<6)
 
-//PS_CMD
-#define PS_SD_ENABLE	(0<<0)
-#define PS_SD_DISABLE	(1<<0)
-#define PS_INT_DISABLE	(0<<1)
-#define PS_INT_ENABLE	(1<<1)
-#define PS_10T_2MS	(0<<2)
-#define PS_15T_3MS	(1<<2)
-#define PS_20T_4MS	(2<<2)
-#define PS_25T_5MS	(3<<2)
-#define PS_CUR_100MA	(0<<4)
-#define PS_CUR_200MA	(1<<4)
-#define PS_SLP_10MS	(0<<5)
-#define PS_SLP_30MS	(1<<5)
-#define PS_SLP_90MS	(2<<5)
-#define PS_SLP_270MS	(3<<5)
-#define TRIG_PS_OR_LS	(0<<7)
-#define TRIG_PS_AND_LS	(1<<7)
+#define ISL29023_REG_ADD_COMMANDII	0x01
+#define COMMANDII_RESOLUTION_SHIFT	2
+#define COMMANDII_RESOLUTION_65536	(0x0 << COMMANDII_RESOLUTION_SHIFT)
+#define COMMANDII_RESOLUTION_4096	(0x1 << COMMANDII_RESOLUTION_SHIFT)
+#define COMMANDII_RESOLUTION_256	(0x2 << COMMANDII_RESOLUTION_SHIFT)
+#define COMMANDII_RESOLUTION_16		(0x3 << COMMANDII_RESOLUTION_SHIFT)
+#define COMMANDII_RESOLUTION_MASK	(0x3 << COMMANDII_RESOLUTION_SHIFT)
 
-//STA_TUS
-#define STA_PS_INT	(1<<5)
-#define	STA_ALS_INT	(1<<4)
+#define COMMANDII_RANGE_SHIFT		0
+#define COMMANDII_RANGE_1000		(0x0 << COMMANDII_RANGE_SHIFT)
+#define COMMANDII_RANGE_4000		(0x1 << COMMANDII_RANGE_SHIFT)
+#define COMMANDII_RANGE_16000		(0x2 << COMMANDII_RANGE_SHIFT)
+#define COMMANDII_RANGE_64000		(0x3 << COMMANDII_RANGE_SHIFT)
+#define COMMANDII_RANGE_MASK		(0x3 << COMMANDII_RANGE_SHIFT)
 
+
+#define COMMANDII_RANGE_MASK		(0x3 << COMMANDII_RANGE_SHIFT)
+
+#define COMMANDII_SCHEME_SHIFT		7
+#define COMMANDII_SCHEME_MASK		(0x1 << COMMANDII_SCHEME_SHIFT)
+
+#define ISL29023_REG_ADD_DATA_LSB	0x02
+#define ISL29023_REG_ADD_DATA_MSB	0x03
+#define ISL29023_MAX_REGS		ISL29023_REG_ADD_DATA_MSB
+
+#define ISL29023_REG_LT_LSB		0x04
+#define ISL29023_REG_LT_MSB		0x05
+#define ISL29023_REG_HT_LSB		0x06
+#define ISL29023_REG_HT_MSB		0x07
 
 
 /****************operate according to sensor chip:start************/
@@ -101,15 +92,15 @@ static int sensor_active(struct i2c_client *client, int enable, int rate)
 	sensor->ops->ctrl_data = sensor_read_reg(client, sensor->ops->ctrl_reg);
 	
 	//register setting according to chip datasheet		
-	if(!enable)
+	if(enable)
 	{	
-		status = ALS_SD_DISABLE;	
-		sensor->ops->ctrl_data |= status;	
+		sensor->ops->ctrl_data &= 0x1f;		
+		sensor->ops->ctrl_data |= COMMMAND1_OPMODE_ALS_CONTINUE;	
 	}
 	else
 	{
-		status = ~ALS_SD_DISABLE;
-		sensor->ops->ctrl_data &= status;
+		sensor->ops->ctrl_data &= 0x1f;	
+		//sensor->ops->ctrl_data |= COMMMAND1_OPMODE_POWER_DOWN;	
 	}
 		
 	DBG("%s:reg=0x%x,reg_ctrl=0x%x,enable=%d\n",__func__,sensor->ops->ctrl_reg, sensor->ops->ctrl_data, enable);
@@ -140,35 +131,7 @@ static int sensor_init(struct i2c_client *client)
 	
 	sensor->status_cur = SENSOR_OFF;
 
-	result = sensor_write_reg(client, SW_RESET, 0);
-	if(result)
-	{
-		printk("%s:line=%d,error\n",__func__,__LINE__);
-		return result;
-	}
-
-	result = sensor_write_reg(client, ALS_THDH1, 0);//it is important,if not then als can not trig intterupt
-	if(result)
-	{
-		printk("%s:line=%d,error\n",__func__,__LINE__);
-		return result;
-	}
-
-	result = sensor_write_reg(client, ALS_THDH2, 0);
-	if(result)
-	{
-		printk("%s:line=%d,error\n",__func__,__LINE__);
-		return result;
-	}	
-
-	sensor->ops->ctrl_data |= ALS_1T_100MS;
-
-	if(sensor->pdata->irq_enable)
-		sensor->ops->ctrl_data |= ALS_INT_ENABLE;
-	else
-		sensor->ops->ctrl_data &= ~ALS_INT_ENABLE;
-	
-	result = sensor_write_reg(client, sensor->ops->ctrl_reg, sensor->ops->ctrl_data);
+	result = sensor_write_reg(client, ISL29023_REG_ADD_COMMANDII, COMMANDII_RANGE_4000 | COMMANDII_RESOLUTION_4096);
 	if(result)
 	{
 		printk("%s:line=%d,error\n",__func__,__LINE__);
@@ -182,26 +145,27 @@ static int sensor_init(struct i2c_client *client)
 static int light_report_value(struct input_dev *input, int data)
 {
 	unsigned char index = 0;
-	if(data <= 100){
+
+	if(data <= 2){
 		index = 0;goto report;
 	}
-	else if(data <= 1600){
-		index = 1;goto report;
-	}
-	else if(data <= 2250){
+	else if(data <= 3){
 		index = 2;goto report;
 	}
-	else if(data <= 3200){
+	else if(data <= 5){
 		index = 3;goto report;
 	}
-	else if(data <= 6400){
+	else if(data <= 8){
 		index = 4;goto report;
 	}
-	else if(data <= 12800){
+	else if(data <= 11){
 		index = 5;goto report;
 	}
-	else if(data <= 26000){
+	else if(data <= 14){
 		index = 6;goto report;
+	}
+	else if(data <= 17){
+		index = 7;goto report;
 	}
 	else{
 		index = 7;goto report;
@@ -240,7 +204,7 @@ static int sensor_report_value(struct i2c_client *client)
 		return result;
 	}
 
-	value = (buffer[0] << 8) | buffer[1];
+	value = (buffer[1] << 8) | buffer[0];
 
 	
 	index = light_report_value(sensor->input_dev, value);
@@ -254,16 +218,6 @@ static int sensor_report_value(struct i2c_client *client)
 			value = sensor_read_reg(client, sensor->ops->int_status_reg);
 		}
 		
-		if(value & STA_ALS_INT)
-		{
-			value &= ~STA_ALS_INT;
-			result = sensor_write_reg(client, sensor->ops->int_status_reg,value);	//clear int
-			if(result)
-			{
-				printk("%s:line=%d,error\n",__func__,__LINE__);
-				return result;
-			}
-		}
 	}
 	
 			
@@ -271,19 +225,19 @@ static int sensor_report_value(struct i2c_client *client)
 }
 
 struct sensor_operate light_stk3171_ops = {
-	.name				= "ls_stk3171",
+	.name				= "ls_isl29023",
 	.type				= SENSOR_TYPE_LIGHT,	//sensor type and it should be correct
-	.id_i2c				= LIGHT_ID_STK3171,	//i2c id number
-	.read_reg			= ALS_DT1,		//read data
+	.id_i2c				= LIGHT_ID_ISL29023,	//i2c id number
+	.read_reg			= ISL29023_REG_ADD_DATA_LSB,		//read data
 	.read_len			= 2,			//data length
 	.id_reg				= SENSOR_UNKNOW_DATA,	//read device id from this register
 	.id_data 			= SENSOR_UNKNOW_DATA,	//device id
 	.precision			= 16,			//8 bits
-	.ctrl_reg 			= ALS_CMD,		//enable or disable 
-	.int_status_reg 		= STA_TUS,		//intterupt status register
+	.ctrl_reg 			= ISL29023_REG_ADD_COMMAND1,		//enable or disable 
+	.int_status_reg 		= ISL29023_REG_ADD_COMMAND1,		//intterupt status register
 	.range				= {100,65535},		//range
-	.brightness                                        ={10,255},     //brightness
-	.trig				= IRQF_TRIGGER_LOW | IRQF_ONESHOT | IRQF_SHARED,		
+	.brightness                     ={10,255},     //brightness
+	.trig				= IRQF_TRIGGER_LOW | IRQF_ONESHOT,		
 	.active				= sensor_active,	
 	.init				= sensor_init,
 	.report				= sensor_report_value,
@@ -304,7 +258,7 @@ static int __init light_stk3171_init(void)
 	int result = 0;
 	int type = ops->type;
 	result = sensor_register_slave(type, NULL, NULL, light_get_ops);
-	DBG("%s\n",__func__);
+	//printk("%s\n",__func__);
 	return result;
 }
 

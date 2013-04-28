@@ -34,8 +34,8 @@
 #include <linux/sensor-dev.h>
 
 #if 0
-#define SENSOR_DEBUG_TYPE SENSOR_TYPE_ACCEL
-#define DBG(x...) if(sensor->pdata->type == SENSOR_DEBUG_TYPE) printk(x)
+//#define SENSOR_DEBUG_TYPE SENSOR_TYPE_ACCEL
+#define DBG(x...)  printk(x)
 #else
 #define DBG(x...)
 #endif
@@ -253,7 +253,7 @@ static int sensor_report_value(struct i2c_client *client)
 }
 
 
-struct sensor_operate gsensor_ops = {
+struct sensor_operate gsensor_mma8452_ops = {
 	.name				= "mma8452",
 	.type				= SENSOR_TYPE_ACCEL,			//sensor type and it should be correct
 	.id_i2c				= ACCEL_ID_MMA845X,			//i2c id number
@@ -274,24 +274,23 @@ struct sensor_operate gsensor_ops = {
 /****************operate according to sensor chip:end************/
 
 //function name should not be changed
-struct sensor_operate *gsensor_get_ops(void)
+static struct sensor_operate *gsensor_get_ops(void)
 {
-	return &gsensor_ops;
+	return &gsensor_mma8452_ops;
 }
 
-EXPORT_SYMBOL(gsensor_get_ops);
 
-static int __init gsensor_init(void)
+static int __init gsensor_mma8452_init(void)
 {
 	struct sensor_operate *ops = gsensor_get_ops();
 	int result = 0;
 	int type = ops->type;
 	result = sensor_register_slave(type, NULL, NULL, gsensor_get_ops);	
-	printk("%s\n",__func__);
+	DBG("%s\n",__func__);
 	return result;
 }
 
-static void __exit gsensor_exit(void)
+static void __exit gsensor_mma8452_exit(void)
 {
 	struct sensor_operate *ops = gsensor_get_ops();
 	int type = ops->type;
@@ -299,8 +298,8 @@ static void __exit gsensor_exit(void)
 }
 
 
-module_init(gsensor_init);
-module_exit(gsensor_exit);
+module_init(gsensor_mma8452_init);
+module_exit(gsensor_mma8452_exit);
 
 
 
