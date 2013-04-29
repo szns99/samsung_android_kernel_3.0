@@ -31,7 +31,7 @@ static int host_connected;
 
 static int s5p_usb_power(struct platform_device *pdev, int on)
 {
-#ifdef CONFIG_REGULATOR
+#if 0//def CONFIG_REGULATOR
  	usb_vcc_d = regulator_get(&pdev->dev, "pd_io");
         usb_vcc_a = regulator_get(&pdev->dev, "pd_core");
         if (IS_ERR_OR_NULL(usb_vcc_d) || IS_ERR_OR_NULL(usb_vcc_a)) {
