@@ -82,7 +82,10 @@ static long gpiomisc_ioctl(struct file *filp, unsigned int cmd, unsigned long ar
 	{
 		flag &= ~cmd;
 	}
-	*(int*)arg = flag;
+	if (arg){
+		*(int*)arg = flag;
+	}
+	
 	DBG("gpiomisc_ioctl: cmd = %d arg = 0x%08x\n",cmd, arg);
 	
 	if (cmd & GPS_CTRL)

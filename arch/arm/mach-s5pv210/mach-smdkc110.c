@@ -3512,7 +3512,7 @@ static void __init smdkv210_machine_init(void)
 	
 
 	if (!gpio_request(S5PV210_GPJ2(2), "AUDIO_PWR_CTR")) {
-	    gpio_direction_output(S5PV210_GPJ2(2), 0);
+	    gpio_direction_output(S5PV210_GPJ2(2), 1);
 	    s3c_gpio_cfgpin(S5PV210_GPJ2(2), S3C_GPIO_SFN(1));
 	    s3c_gpio_setpull(S5PV210_GPJ2(2), S3C_GPIO_PULL_NONE);
 	}
