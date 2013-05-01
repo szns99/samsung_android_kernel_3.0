@@ -43,7 +43,7 @@ int charger_in_logo=0;
 int pc_or_charger = -1;
 int otg_phy_suspend = -1;
 
-#define DBG_AXP_PSY 1
+#define DBG_AXP_PSY 0
 #if  DBG_AXP_PSY
 #define DBG_PSY_MSG(format,args...)   printk(KERN_DEBUG "[AXP]"format,##args)
 #else

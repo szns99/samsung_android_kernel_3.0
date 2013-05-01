@@ -847,6 +847,13 @@ static struct s3cfb_lcd lte480wv = {
                 .inv_vden = 0,
         },
 };
+
+/* name should be fixed as 's3cfb_set_lcd_info' */
+void s3cfb_set_lcd_info(struct s3cfb_global *ctrl)
+{
+	lte480wv.init_ldi = NULL;
+	ctrl->lcd = &lte480wv;
+}
 #endif
 
 static void lte480wv_cfg_gpio(struct platform_device *pdev)
@@ -2106,7 +2113,6 @@ void SPI_Initial(void)
 		s3c_gpio_cfgpin(S5PV210_GPJ2(4), S3C_GPIO_SFN(1));
 		s3c_gpio_setpull(S5PV210_GPJ2(4), S3C_GPIO_PULL_NONE);
 		gpio_direction_output(S5PV210_GPJ2(4), 1);
-		//gpio_free(S5PV210_GPJ2(4));
 	}
 	err = gpio_request(S5PV210_GPJ2(5), "PWM_PWR");
 	if (err)
@@ -2118,8 +2124,6 @@ void SPI_Initial(void)
 		s3c_gpio_cfgpin(S5PV210_GPJ2(5), S3C_GPIO_SFN(1));
 		s3c_gpio_setpull(S5PV210_GPJ2(5), S3C_GPIO_PULL_NONE);
 		gpio_direction_output(S5PV210_GPJ2(5), 1);
-		//gpio_free(S5PV210_GPJ2(5));
-		//while(1);
 	}
 	
 	printk("lte480wv_reset_lcd.....................\n");
@@ -2133,14 +2137,7 @@ void SPI_Initial(void)
 		s3c_gpio_cfgpin(S5PV210_GPJ2(3), S3C_GPIO_SFN(1));
 		s3c_gpio_setpull(S5PV210_GPJ2(3), S3C_GPIO_PULL_NONE);
 		gpio_direction_output(S5PV210_GPJ2(3), 1);
-		gpio_free(S5PV210_GPJ2(3));
 	}
-
-	mdelay(10);
-	gpio_direction_output(S5PV210_GPJ2(3), 0);
-	mdelay(20);
-	gpio_direction_output(S5PV210_GPJ2(3), 1);
-	mdelay(20);
 
 	err = gpio_request(S5PV210_GPB(1), "SPI_CS");
 	if (err)
@@ -2178,10 +2175,17 @@ void SPI_Initial(void)
 		gpio_direction_output(S5PV210_GPB(3), 1);
 	}
 	
+	mdelay(10);
+	gpio_direction_output(S5PV210_GPJ2(3), 0);
+	mdelay(20);
+	gpio_direction_output(S5PV210_GPJ2(3), 1);
+	mdelay(20);
 }
 
 void SPI_Uninitial(void)
 {
+	gpio_free(S5PV210_GPJ2(4));
+	gpio_free(S5PV210_GPJ2(3));
 	gpio_free(S5PV210_GPB(1));
 	gpio_free(S5PV210_GPB(0));
 	gpio_free(S5PV210_GPB(3));

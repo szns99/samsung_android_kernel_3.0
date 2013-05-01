@@ -325,6 +325,11 @@ static int __devinit axp_mfd_probe(struct i2c_client *client,
 	if (ret)
 		goto out_free_chip;
 
+uint8_t tmp = 0;
+	__axp_read(chip->client, POWER20_CHARGE1, &tmp);
+	__axp_write(chip->client, POWER20_CHARGE1, tmp|0x09);
+
+	printk("%s----------------------%d!\n",__func__,__LINE__);
 /*		
 		///-----
 	printk("%s----------------------%d!\n",__func__,__LINE__);
