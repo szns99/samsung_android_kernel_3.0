@@ -393,7 +393,7 @@ static int __devinit gpio_keys_setup_key(struct platform_device *pdev,
 		goto fail3;
 	}
 
-	s3c_gpio_setpull(button->gpio, S3C_GPIO_PULL_NONE);
+	s3c_gpio_setpull(button->gpio, S3C_GPIO_PULL_UP);
 	s3c_gpio_cfgpin(button->gpio, S3C_GPIO_SFN(0xF));
 	if (button->debounce_interval) {
 		error = gpio_set_debounce(button->gpio,

@@ -190,7 +190,7 @@ static void axp_mfd_irq_work(struct work_struct *work)
 	struct axp_mfd_chip *chip =
 		container_of(work, struct axp_mfd_chip, irq_work);
 	uint64_t irqs = 0;
-
+	printk("axp_mfd_irq_work interrupt is coming\n");
 	while (1) {
 		if (chip->ops->read_irqs(chip, &irqs))
 			break;
@@ -208,7 +208,7 @@ static irqreturn_t axp_mfd_irq_handler(int irq, void *data)
 {
 	struct axp_mfd_chip *chip = data;
 	disable_irq_nosync(irq);
-	(void)schedule_work(&chip->irq_work);
+	schedule_work(&chip->irq_work);
 
 	return IRQ_HANDLED;
 }
@@ -307,7 +307,7 @@ static int __devinit axp_mfd_probe(struct i2c_client *client,
 {
 	struct axp_platform_data *pdata = client->dev.platform_data;
 	struct axp_mfd_chip *chip;
-	int ret;
+	int ret,irq;
 	chip = kzalloc(sizeof(struct axp_mfd_chip), GFP_KERNEL);
 	if (chip == NULL)
 		return -ENOMEM;
@@ -326,13 +326,8 @@ static int __devinit axp_mfd_probe(struct i2c_client *client,
 	if (ret)
 		goto out_free_chip;
 
-uint8_t tmp = 0;
-	__axp_read(chip->client, POWER20_CHARGE1, &tmp);
-	__axp_write(chip->client, POWER20_CHARGE1, tmp|0x09);
-
-	printk("%s----------------------%d!\n",__func__,__LINE__);
-/*		
 		///-----
+	msleep(30);
 	printk("%s----------------------%d!\n",__func__,__LINE__);
 uint8_t tmp = 0;
 	__axp_read(chip->client, POWER20_GPIO0_CTL, &tmp);
@@ -340,38 +335,53 @@ uint8_t tmp = 0;
 	msleep(30);
 	printk("%s----------------------%d!\n",__func__,__LINE__);
 	
-	tmp = 0;
-	__axp_read(chip->client, POWER20_GPIO0_VOL, &tmp);
-	__axp_write(chip->client, POWER20_GPIO0_VOL, tmp|0xff);
+	//tmp = 0;
+	//__axp_read(chip->client, POWER20_GPIO0_VOL, &tmp);
+	//__axp_write(chip->client, POWER20_GPIO0_VOL, tmp|0xff);
 	
+	msleep(30);
 	printk("%s----------------------%d!\n",__func__,__LINE__);
 	tmp = 0;
 	__axp_read(chip->client, POWER19_CHARGE1, &tmp);
 	__axp_write(chip->client, POWER19_CHARGE1, tmp|0x09);
 
-	printk("%s----------------------%d!\n",__func__,__LINE__);
+	//msleep(30);
+	//printk("%s----------------------%d!\n",__func__,__LINE__);
 
-		tmp = 0;
-	__axp_read(chip->client, POWER20_DC2OUT_VOL, &tmp);
-	__axp_write(chip->client, POWER20_DC2OUT_VOL, 0x20);
+	//	tmp = 0;
+	//__axp_read(chip->client, POWER20_DC2OUT_VOL, &tmp);
+	//__axp_write(chip->client, POWER20_DC2OUT_VOL, 0x20);
 
-	printk("%s----------------------%d!\n",__func__,__LINE__);
-		tmp = 0;
-	__axp_read(chip->client, POWER20_DC3OUT_VOL, &tmp);
-	__axp_write(chip->client, POWER20_DC3OUT_VOL, 0x5c);
-	printk("%s----------------------%d!\n",__func__,__LINE__);
+	//msleep(30);
+	//printk("%s----------------------%d!\n",__func__,__LINE__);
+	//	tmp = 0;
+	//__axp_read(chip->client, POWER20_DC3OUT_VOL, &tmp);
+	//__axp_write(chip->client, POWER20_DC3OUT_VOL, 0x5c);
+	//printk("%s----------------------%d!\n",__func__,__LINE__);
 	//------
-*/
+
 #if defined (CONFIG_KP_USEIRQ)
 	INIT_WORK(&chip->irq_work, axp_mfd_irq_work);
 	BLOCKING_INIT_NOTIFIER_HEAD(&chip->notifier_list);
+	ret = gpio_request(client->irq, "axp202_irq");
+	if (ret) {
+		printk( "failed to request axp202 gpio\n");
+		return ret;
+	}
+  gpio_direction_input(client->irq);
+	s3c_gpio_setpull(client->irq, S3C_GPIO_PULL_UP);
+	msleep(10);
+	s3c_gpio_cfgpin(client->irq, S3C_GPIO_SFN(0xF));//as int
+	irq = gpio_to_irq(client->irq);
+	printk("irq=%d----------------irq2=%d\n",irq,client->irq);
 	ret = request_irq(client->irq, axp_mfd_irq_handler,
-		IRQF_DISABLED, "axp_mfd", chip);
+		IRQF_TRIGGER_LOW, "axp_mfd", chip);
   	if (ret) {
   		dev_err(&client->dev, "failed to request irq %d\n",
   				client->irq);
   		goto out_free_chip;
   	}
+ 	client->irq = irq;
 #endif
 
 	ret = axp_mfd_add_subdevs(chip, pdata);

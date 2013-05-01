@@ -414,55 +414,8 @@ static int axp_battery_event(struct notifier_block *nb, unsigned long event,
 		axp_capchange(charger);
 	}
 
-
-	//if (charger_in_logo != 0) {
-	if(0){
-		//pc_or_charger = dwc_otg_check_dpdm();
-	} else {
-		//pc_or_charger = dwc_vbus_status();
-	}
-	//otg_phy_suspend = dwc_otg_get_phy_status();
-
-	//printk("cdy---pc_or_charger = %d,otg_phy_suspend = %d ,\n",pc_or_charger,otg_phy_suspend );
-
-	if(event & (AXP_IRQ_ACIN|AXP_IRQ_USBIN|AXP_IRQ_ACOV|AXP_IRQ_USBOV|AXP_IRQ_CHAOV
-				|AXP_IRQ_CHAST|AXP_IRQ_TEMOV|AXP_IRQ_TEMLO)) {
-		if(event & AXP_IRQ_USBIN)
-		{
-			if((otg_phy_suspend == 0) && (pc_or_charger == 0))
-			{	
-			
-			}else
-			{
-				axp_change(charger);
-			}
-		}else
-		{
+	if(event & AXP_NOTIFIER_ON) {
 			axp_change(charger);
-		}
-	}
-
-	if(event & (AXP_IRQ_ACRE|AXP_IRQ_USBRE)) {
-		if(event & AXP_IRQ_USBRE)
-		{
-			if((otg_phy_suspend == 0) && (pc_or_charger == 0))
-			{
-				
-			}else
-			{
-				axp_change(charger);
-			}
-		}else
-		{
-			axp_change(charger);
-		}
-		/*if (charger_in_logo == 1) {
-		 	if(charger->usb_valid == 0 && charger->ac_valid == 0 )
-			 {
-		 		printk("cdy #### AXP_IRQ_USBRE--- poweroff\n");
-				axp_power_off();
-		 	}
-		}*/
 	}
 
 	if(event & AXP_IRQ_PEKLO) {
@@ -584,8 +537,10 @@ static int axp_battery_probe(struct platform_device *pdev)
 #if defined (CONFIG_KP_USEIRQ)
 	charger->nb.notifier_call = axp_battery_event;
 	ret = axp_register_notifier(charger->master, &charger->nb, AXP_NOTIFIER_ON);
-	if (ret)
+	if (ret){
+		printk("axp_register_notifier failed\n");
 		goto err_notifier;
+	}
 #endif
 
 	axp_battery_setup_psy(charger);

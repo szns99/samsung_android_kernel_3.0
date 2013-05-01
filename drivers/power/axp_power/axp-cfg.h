@@ -9,9 +9,9 @@
 */
 #define	AXP_DEVICES_ADDR	(0x68 >> 1)
 /*i2c控制器的设备号:具体看所使用平台硬件的连接，由于使用了自动探测，此处可以不设置，方案2、3需要配置*/
-#define	AXP_I2CBUS			1
+#define	AXP_I2CBUS			2
 /*电源芯片对应的中断号：具体看所使用的平台硬件的连接，中断线nmi连接cpu的哪路irq或者gpio*/
-#define AXP_IRQNO			S5PV210_GPH3(7)
+#define AXP_IRQNO			S5PV210_GPH0(1)
 
 /*初始化各路输出，单位mV，0都为关闭*/
 /*
