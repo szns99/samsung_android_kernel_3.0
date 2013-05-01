@@ -294,6 +294,7 @@ failed:
 //			printk("[axp] warning!!! arch can't ,reboot, maybe some error happend!\n");
 //		}
 //	}
+	axp_clr_bits(&axp->dev, POWER20_HOTOVER_CTL, 0x80);
 	axp_set_bits(&axp->dev, AXP_OFF_CTL, 0x80);
 	mdelay(20);
 	printk("[axp] warning!!! axp can't power-off, maybe some error happend!\n");
