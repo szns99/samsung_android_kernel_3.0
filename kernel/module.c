@@ -1982,6 +1982,7 @@ static void layout_sections(struct module *mod, struct load_info *info)
 
 static void set_license(struct module *mod, const char *license)
 {
+	return;
 	if (!license)
 		license = "unspecified";
 

@@ -277,7 +277,7 @@ static int s3c_pm_enter(suspend_state_t state)
 	    !any_allowed(s3c_irqwake_eintmask, s3c_irqwake_eintallow)) {
 		printk(KERN_ERR "%s: No wake-up sources!\n", __func__);
 		printk(KERN_ERR "%s: Aborting sleep\n", __func__);
-//		return -EINVAL;
+		return -EINVAL;
 	}
 
 	/* save all necessary core registers not covered by the drivers */

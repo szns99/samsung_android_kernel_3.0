@@ -17,6 +17,7 @@
 #include <linux/delay.h>
 #include <linux/workqueue.h>
 #include <linux/wakelock.h>
+#include "power.h"
 
 /* 
  * Timeout for stopping processes
@@ -117,6 +118,7 @@ static int try_to_freeze_tasks(bool sig_only)
 			printk("\n");
 			printk(KERN_ERR "Freezing of %s aborted\n",
 					sig_only ? "user space " : "tasks ");
+			print_active_wake_locks(WAKE_LOCK_SUSPEND);
 		}
 		else {
 			printk("\n");
@@ -157,6 +159,12 @@ int freeze_processes(void)
 	if (error)
 		goto Exit;
 	printk("done.\n");
+
+#ifdef CONFIG_SUSPEND_SYNC_WORKQUEUE
+	error = suspend_sys_sync_wait();
+	if (error)
+		goto Exit;
+#endif
 
 	printk("Freezing remaining freezable tasks ... ");
 	error = try_to_freeze_tasks(false);

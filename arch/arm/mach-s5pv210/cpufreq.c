@@ -36,7 +36,7 @@ static DEFINE_MUTEX(set_freq_lock);
 #define APLL_VAL_1000	((1 << 31) | (125 << 16) | (3 << 8) | 1)
 #define APLL_VAL_800	((1 << 31) | (100 << 16) | (3 << 8) | 1)
 
-#define SLEEP_FREQ	(800 * 1000) /* Use 800MHz when entering sleep */
+#define SLEEP_FREQ	(200 * 1000) /* Use 800MHz when entering sleep */
 
 /*
  * relation has an additional symantics other than the standard of cpufreq
