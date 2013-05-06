@@ -466,10 +466,10 @@ static struct gpio_keys_button gpio_buttons[] = {
  }, 
   {  
    .gpio  = S5PV210_GPH1(3),  
-   .code  = KEY_BACK,   
+   .code  = KEY_F2,   
    .desc  = "key_scan",  
    .active_low = 1,  
-   //.wakeup  = 1,  
+   .wakeup  = 1,  
    .debounce_interval =100
  }, 
 }; 
