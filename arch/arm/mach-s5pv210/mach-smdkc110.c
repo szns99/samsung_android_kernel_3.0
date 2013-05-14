@@ -1252,9 +1252,9 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 #ifdef CONFIG_S3C_DEV_HSMMC3
 	&s3c_device_hsmmc3,
 #endif
+	&s3c_device_i2c2,
 	&s3c_device_i2c0,
 	&s3c_device_i2c1,
-	&s3c_device_i2c2,
 #ifdef CONFIG_KEYBOARD_GPIO
 	&s3c_device_gpio_button,
 #endif

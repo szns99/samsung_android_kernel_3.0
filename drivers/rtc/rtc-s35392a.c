@@ -900,7 +900,7 @@ static int s35392a_remove(struct i2c_client *client)
 }
 
 static const struct i2c_device_id s35392a_id[] = {
-	{ "rtc-s35392a", 0 },
+	{ "rtc_s35392a", 0 },
 	{ }
 };
 MODULE_DEVICE_TABLE(i2c, s35392a_id);
