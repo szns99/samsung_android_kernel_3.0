@@ -106,6 +106,7 @@
 #include <plat/media.h>
 #include <mach/media.h>
 #include <mach/gpio-smdkc110.h>
+#define LED_CTRL S5PV210_GPH2(3)
 
 #include <mach/cpu-freq-v210.h>
 #ifdef CONFIG_TOUCHSCREEN_EGALAX
@@ -3391,6 +3392,11 @@ static void __init smdkv210_machine_init(void)
 
 	//samsung_keypad_set_platdata(&smdkv210_keypad_data);
 	//s3c24xx_ts_set_platdata(&s3c_ts_platform);
+	gpio_request(LED_CTRL,NULL);
+  s3c_gpio_cfgpin(LED_CTRL, S3C_GPIO_SFN(1));
+  s3c_gpio_setpull(LED_CTRL, S3C_GPIO_PULL_UP);
+	gpio_direction_output(LED_CTRL,1);
+	gpio_free(LED_CTRL);
 
 	s3c_i2c0_set_platdata(NULL);
 	s3c_i2c1_set_platdata(NULL);

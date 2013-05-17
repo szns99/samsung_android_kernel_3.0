@@ -569,7 +569,7 @@ unsigned char fts_ctpm_get_upg_ver(void)
 
 
 #ifdef TOUCHKEY_ON_SCREEN
-
+extern void key_led_power(int onoff);
 static void key_led_ctrl(int on)
 {
 	#ifdef TOUCH_KEY_LED
@@ -619,10 +619,10 @@ static int report_screen_key(int down_up)
 		input_event(keydev, EV_KEY, g_screen_key, down_up);
 		input_sync(keydev);
 	} 
-	key_led_ctrl(down_up);
-	if(!down_up) {
-		g_screen_key=0;
-	}
+	key_led_power(down_up);
+	//if(!down_up) {
+	//	g_screen_key=0;
+	//}
 	
 	return 0;
 }
@@ -908,7 +908,7 @@ static void ft5x0x_report_value(void)
 					s_screen_key[i] = 0;
 #ifdef TOUCHKEY_ON_SCREEN
 					printk("touch key up!\n");
-					report_screen_key(0);
+					//report_screen_key(0);
 #endif          			
             			}
 #if 0
@@ -1006,7 +1006,7 @@ static void ft5x0x_ts_suspend(struct early_suspend *handler)
 	ts =  container_of(handler, struct ft5x0x_ts_dev, early_suspend);
 	
 #ifdef TOUCHKEY_ON_SCREEN
-	key_led_ctrl(0);
+	//key_led_ctrl(0);
 #endif
 
 #if USE_POINT
@@ -1037,7 +1037,7 @@ static void ft5x0x_ts_resume(struct early_suspend *handler)
 	// wake the mode
 	
 #ifdef TOUCHKEY_ON_SCREEN
-	key_led_ctrl(0);
+	//key_led_ctrl(0);
 #endif
 	gpio_direction_output(S5PV210_GPJ3(7), 0);
 	// gpio_set_value(RK29_PIN6_PC3,GPIO_LOW);

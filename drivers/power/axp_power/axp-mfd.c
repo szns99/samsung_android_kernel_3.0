@@ -375,7 +375,7 @@ uint8_t tmp = 0;
 	irq = gpio_to_irq(client->irq);
 	printk("irq=%d----------------irq2=%d\n",irq,client->irq);
 	ret = request_irq(client->irq, axp_mfd_irq_handler,
-		IRQF_TRIGGER_LOW, "axp_mfd", chip);
+		IRQF_DISABLED, "axp_mfd", chip);
   	if (ret) {
   		dev_err(&client->dev, "failed to request irq %d\n",
   				client->irq);

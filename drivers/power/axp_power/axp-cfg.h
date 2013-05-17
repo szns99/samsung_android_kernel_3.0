@@ -50,13 +50,13 @@
 		AXP20:700~2275，25/step
 		AXP19:700~2275，25/step
 */
-#define AXP_DCDC2_VALUE		1250
+#define AXP_DCDC2_VALUE		1100
 /*
 	DCDC3：
 		AXP20:700~3500，25/step
 		AXP19:700~3500，25/step
 */
-#define AXP_DCDC3_VALUE		3000
+#define AXP_DCDC3_VALUE		1200
 
 /*电池容量，mAh：根据实际电池容量来定义，对库仑计方法来说这个参数很重要，必须配置*/
 #define BATCAP				2700
@@ -72,9 +72,9 @@
 		AXP19:100/190/280/360/450/550/630/700/780/880/960/1000/1080/1160/1240/1320
 */
 /*开机充电电流，mA*/
-#define STACHGCUR			1200
+#define STACHGCUR			700
 /*关屏充电电流，mA*/
-#define EARCHGCUR			1200
+#define EARCHGCUR			1000
 /*休眠充电电流，mA*/
 #define SUSCHGCUR			EARCHGCUR
 /*关机充电电流，mA*/
@@ -169,7 +169,7 @@
 	AXP20:4100~4700，100/step
 	AXP19:4100~4700，100/step
 */
-#define USBVOLLIM			4000
+#define USBVOLLIM			4500
 
 /* usb 限流，mA，0为不限制*/
 /*
