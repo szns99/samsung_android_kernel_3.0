@@ -348,15 +348,15 @@ uint8_t tmp = 0;
 	//msleep(30);
 	//printk("%s----------------------%d!\n",__func__,__LINE__);
 
-	//	tmp = 0;
-	//__axp_read(chip->client, POWER20_DC2OUT_VOL, &tmp);
-	//__axp_write(chip->client, POWER20_DC2OUT_VOL, 0x20);
+		tmp = 0;
+	__axp_read(chip->client, POWER20_DC2OUT_VOL, &tmp);
+	__axp_write(chip->client, POWER20_DC2OUT_VOL, 0x10);
 
 	//msleep(30);
 	//printk("%s----------------------%d!\n",__func__,__LINE__);
-	//	tmp = 0;
-	//__axp_read(chip->client, POWER20_DC3OUT_VOL, &tmp);
-	//__axp_write(chip->client, POWER20_DC3OUT_VOL, 0x5c);
+		tmp = 0;
+	__axp_read(chip->client, POWER20_DC3OUT_VOL, &tmp);
+	__axp_write(chip->client, POWER20_DC3OUT_VOL, 0x14);
 	//printk("%s----------------------%d!\n",__func__,__LINE__);
 	//------
 
