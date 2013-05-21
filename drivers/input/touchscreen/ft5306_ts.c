@@ -569,7 +569,9 @@ unsigned char fts_ctpm_get_upg_ver(void)
 
 
 #ifdef TOUCHKEY_ON_SCREEN
+#ifdef CONFIG_KEY_LED_CTRL
 extern void key_led_power(int onoff);
+#endif
 static void key_led_ctrl(int on)
 {
 	#ifdef TOUCH_KEY_LED
@@ -619,7 +621,9 @@ static int report_screen_key(int down_up)
 		input_event(keydev, EV_KEY, g_screen_key, down_up);
 		input_sync(keydev);
 	} 
+#ifdef CONFIG_KEY_LED_CTRL
 	key_led_power(down_up);
+#endif
 	//if(!down_up) {
 	//	g_screen_key=0;
 	//}

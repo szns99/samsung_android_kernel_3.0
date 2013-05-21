@@ -439,6 +439,33 @@ static struct samsung_keypad_platdata smdkv210_keypad_data __initdata = {
 	.rows		= 8,
 	.cols		= 8,
 };
+
+#ifdef CONFIG_KEY_LED_CTRL
+
+struct delayed_work key_led_work;
+void key_led_power(int onoff);
+static void key_led_work_func(struct work_struct *work)
+{
+	key_led_power(0);
+}
+void key_led_power(int onoff)
+{
+	if (onoff){
+		gpio_direction_output(LED_CTRL,1);
+		printk("led light on\n");
+		cancel_delayed_work(&key_led_work);
+		flush_delayed_work(&key_led_work);
+		schedule_delayed_work(&key_led_work, msecs_to_jiffies(3000));
+	}
+	else{
+		gpio_direction_output(LED_CTRL,0);
+		printk("led light off\n");
+	}
+}
+EXPORT_SYMBOL(key_led_power);
+
+#endif
+
 #ifdef CONFIG_KEYBOARD_GPIO
 static struct gpio_keys_button gpio_buttons[] = { 
   {  
@@ -3392,11 +3419,14 @@ static void __init smdkv210_machine_init(void)
 
 	//samsung_keypad_set_platdata(&smdkv210_keypad_data);
 	//s3c24xx_ts_set_platdata(&s3c_ts_platform);
-	gpio_request(LED_CTRL,NULL);
+#ifdef CONFIG_KEY_LED_CTRL
+	gpio_request(LED_CTRL,"led_ctrl");
   s3c_gpio_cfgpin(LED_CTRL, S3C_GPIO_SFN(1));
   s3c_gpio_setpull(LED_CTRL, S3C_GPIO_PULL_UP);
 	gpio_direction_output(LED_CTRL,1);
-	gpio_free(LED_CTRL);
+	INIT_DELAYED_WORK(&key_led_work, key_led_work_func);
+	key_led_power(1);
+#endif
 
 	s3c_i2c0_set_platdata(NULL);
 	s3c_i2c1_set_platdata(NULL);

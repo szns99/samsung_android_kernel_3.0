@@ -26,8 +26,6 @@
 #include <linux/workqueue.h>
 #include <linux/gpio.h>
 
-#define LED_CTRL S5PV210_GPH2(3)
-
 struct gpio_button_data {
 	struct gpio_keys_button *button;
 	struct input_dev *input;
@@ -46,25 +44,10 @@ struct gpio_keys_drvdata {
 	struct gpio_button_data data[0];
 };
 
+#ifdef CONFIG_KEY_LED_CTRL
+extern void key_led_power(int onoff);
+#endif
 
-struct delayed_work key_led_work;
-void key_led_power(int onoff);
-static void key_led_work_func(struct work_struct *work)
-{
-	key_led_power(0);
-}
-void key_led_power(int onoff)
-{
-	if (onoff){
-		gpio_direction_output(LED_CTRL,1);
-		schedule_delayed_work(&key_led_work, msecs_to_jiffies(3000));
-	}
-	else{
-		gpio_direction_output(LED_CTRL,0);
-		//cancel_delayed_work_sync(&key_led_work);
-	}
-}
-EXPORT_SYMBOL(key_led_power);
 /*
  * SYSFS interface for enabling/disabling keys and switches:
  *
@@ -353,9 +336,11 @@ static void gpio_keys_report_event(struct gpio_button_data *bdata)
 		input_event(input, type, button->code, !!state);
 	}
 	input_sync(input);
-	if (button->code != KEY_POWER)
+	if (button->code != KEY_POWER && button->code)
 	{
+#ifdef CONFIG_KEY_LED_CTRL
 		key_led_power(1);
+#endif
 	}
 }
 
@@ -556,9 +541,6 @@ static int __devinit gpio_keys_probe(struct platform_device *pdev)
 
 	device_init_wakeup(&pdev->dev, wakeup);
 	
-	gpio_request(LED_CTRL,"led_ctrl");
-	gpio_direction_output(LED_CTRL,0);
-	INIT_DELAYED_WORK(&key_led_work, key_led_work_func);
 	return 0;
 
  fail3:
@@ -613,7 +595,9 @@ static int gpio_keys_suspend(struct device *dev)
 	struct gpio_keys_platform_data *pdata = pdev->dev.platform_data;
 	int i;
 
+#ifdef CONFIG_KEY_LED_CTRL
 	key_led_power(0);
+#endif
 	if (device_may_wakeup(&pdev->dev)) {
 		for (i = 0; i < pdata->nbuttons; i++) {
 			struct gpio_keys_button *button = &pdata->buttons[i];
@@ -645,7 +629,9 @@ static int gpio_keys_resume(struct device *dev)
 		gpio_keys_report_event(&ddata->data[i]);
 	}
 	input_sync(ddata->input);
+#ifdef CONFIG_KEY_LED_CTRL
 	key_led_power(1);
+#endif
 	return 0;
 }
 

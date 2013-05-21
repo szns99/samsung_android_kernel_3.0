@@ -52,7 +52,7 @@ static dev_t    dev;
 static struct   cdev gpiomisc_cdev;
 static struct class* gpiomisc_class;
 static struct gpio_platform_data* pgpio_data;
-static int flag = GPS_CTRL|GPS_PWR|RS232_CTRL|RS232_PWR|SER1_CS2|SCAN_PWDN|IRED_CTRL;
+static int flag = GPS_CTRL|RS232_CTRL|RS232_PWR|SER1_CS2|SCAN_PWDN|IRED_CTRL;
 extern struct pwm_device *ir_led_pwm;
 
 
@@ -198,7 +198,7 @@ static int gpiomisc_probe(struct platform_device *pdev)
 	}
 	else
 	{
-		gpio_direction_output(pgpio_data->gps_pwr.gpio,1);
+		gpio_direction_output(pgpio_data->gps_pwr.gpio,0);
 		s5p_gpio_set_drvstr(pgpio_data->gps_pwr.gpio,S5P_GPIO_DRVSTR_LV4);
 		s3c_gpio_setpull(pgpio_data->gps_pwr.gpio, S3C_GPIO_PULL_NONE);
 		s3c_gpio_cfgpin(pgpio_data->gps_pwr.gpio, S3C_GPIO_SFN(1));
