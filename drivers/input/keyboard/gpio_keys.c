@@ -595,9 +595,6 @@ static int gpio_keys_suspend(struct device *dev)
 	struct gpio_keys_platform_data *pdata = pdev->dev.platform_data;
 	int i;
 
-#ifdef CONFIG_KEY_LED_CTRL
-	key_led_power(0);
-#endif
 	if (device_may_wakeup(&pdev->dev)) {
 		for (i = 0; i < pdata->nbuttons; i++) {
 			struct gpio_keys_button *button = &pdata->buttons[i];
@@ -607,6 +604,9 @@ static int gpio_keys_suspend(struct device *dev)
 			}
 		}
 	}
+#ifdef CONFIG_KEY_LED_CTRL
+	key_led_power(0);
+#endif
 
 	return 0;
 }
