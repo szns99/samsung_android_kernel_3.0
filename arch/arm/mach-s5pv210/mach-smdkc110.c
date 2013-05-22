@@ -452,14 +452,14 @@ void key_led_power(int onoff)
 {
 	if (onoff){
 		gpio_direction_output(LED_CTRL,1);
-		printk("led light on\n");
+		//printk("led light on\n");
 		cancel_delayed_work(&key_led_work);
 		flush_delayed_work(&key_led_work);
 		schedule_delayed_work(&key_led_work, msecs_to_jiffies(3000));
 	}
 	else{
 		gpio_direction_output(LED_CTRL,0);
-		printk("led light off\n");
+		//printk("led light off\n");
 	}
 }
 EXPORT_SYMBOL(key_led_power);

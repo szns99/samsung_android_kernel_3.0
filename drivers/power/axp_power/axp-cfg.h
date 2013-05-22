@@ -91,7 +91,7 @@
 	AXP20:10\15
 	AXP19:10\15
 */ 
-#define ENDCHGRATE			5
+#define ENDCHGRATE			10
 /*adc采样率设置，Hz*/
 /*
 	AXP20:25\50\100\200
@@ -169,7 +169,7 @@
 	AXP20:4100~4700，100/step
 	AXP19:4100~4700，100/step
 */
-#define USBVOLLIM			4500
+#define USBVOLLIM			4000
 
 /* usb 限流，mA，0为不限制*/
 /*

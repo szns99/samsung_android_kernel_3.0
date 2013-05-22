@@ -135,7 +135,7 @@ static void axp_charging_monitor(struct work_struct *work)
 			rt_rest_cap = 100;
 		}
 		if(ABS(rt_rest_cap - charger->ocv_rest_cap) > 5){
-			DBG_PSY_MSG("correct rdc\n");
+			printk("correct rdc\n");
 #if defined (CONFIG_KP_AXP20)
 			axp_clr_bits(charger->master,AXP_DATA_BUFFER0,0x08);
 #endif
@@ -679,7 +679,7 @@ if(axp_debug){
 	axp_reads(charger->master,AXP_RDC_BUFFER0,2,v);
 #if defined (CONFIG_KP_AXP20)
 	rdc = (((v[0] & 0x1F) << 8) | v[1]) * 10742 / 10000;
-	printk("rdc = %d\n",rdc);
+	DBG_PSY_MSG("rdc = %d\n",rdc);
 	axp_read(charger->master,0x8,v);
 	DBG_PSY_MSG("base restvol = %d\n",(int) v);
 #endif

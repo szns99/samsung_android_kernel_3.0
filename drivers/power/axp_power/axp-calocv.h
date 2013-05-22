@@ -191,7 +191,7 @@ if(axp_debug){
 #if defined (CONFIG_KP_AXP20)
 	axp_reads(charger->master,AXP_RDC_BUFFER0,2,v);
 	rdc = (((v[0] & 0x1F) << 8) | v[1]) * 10742 / 10000;
-	printk("rdc = %d\n",rdc);
+	DBG_PSY_MSG("rdc = %d\n",rdc);
 #endif
 #if defined (CONFIG_KP_AXP19)
 	axp_reads(charger->master,AXP_RDC_BUFFER0,2,v);

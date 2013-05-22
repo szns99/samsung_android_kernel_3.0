@@ -197,7 +197,7 @@ static struct regulator_init_data axp_regl_init_data[] = {
 //			}
 //#endif
 			.state_mem	= {
-				.uV	= 1100000,
+				.uV	= 1000000,
 				.mode	= REGULATOR_MODE_NORMAL,
 				.enabled = 0,
 			},
@@ -219,7 +219,7 @@ static struct regulator_init_data axp_regl_init_data[] = {
 //			}
 //#endif
 			.state_mem	= {
-				.uV	= 1250000,
+				.uV	= 950000,
 				.mode	= REGULATOR_MODE_STANDBY,
 				.enabled = 0,
 			},
