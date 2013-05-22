@@ -621,12 +621,14 @@ static int report_screen_key(int down_up)
 		input_event(keydev, EV_KEY, g_screen_key, down_up);
 		input_sync(keydev);
 	} 
+	if(!down_up) {
+		g_screen_key=0;
+	}
+	else{
 #ifdef CONFIG_KEY_LED_CTRL
-	key_led_power(down_up);
+		key_led_power(1);
 #endif
-	//if(!down_up) {
-	//	g_screen_key=0;
-	//}
+	}
 	
 	return 0;
 }
@@ -911,8 +913,8 @@ static void ft5x0x_report_value(void)
 				{
 					s_screen_key[i] = 0;
 #ifdef TOUCHKEY_ON_SCREEN
-					printk("touch key up!\n");
-					//report_screen_key(0);
+					//printk("touch key up!\n");
+					report_screen_key(0);
 #endif          			
             			}
 #if 0
