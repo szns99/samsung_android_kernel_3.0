@@ -33,15 +33,15 @@
 
 struct wake_lock batt_wake_lock;
 //extern int dwc_otg_check_dpdm(void);
-//extern int charger_in_logo;
+extern int charger_in_logo;
 //extern int dwc_vbus_status(void);
 //extern int dwc_otg_get_phy_status(void);
 extern void s5p_pm_power_off(void);
 
 
-int charger_in_logo=0;
-int pc_or_charger = -1;
-int otg_phy_suspend = -1;
+//int charger_in_logo=0;
+//int pc_or_charger = -1;
+//int otg_phy_suspend = -1;
 
 #define DBG_AXP_PSY 0
 #if  DBG_AXP_PSY

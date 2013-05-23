@@ -235,6 +235,10 @@ config CHARGER_GPIO
 	  This driver can be build as a module. If so, the module will be
 	  called gpio-charger.
 
+config POWER_ON_CHARGER_DISPLAY
+	bool "Support charger display"
+	default n
+
 source "drivers/power/axp_power/Kconfig"
 
 endif # POWER_SUPPLY

@@ -354,6 +354,12 @@ static struct logo_data {
 	const struct linux_logo *logo;
 } fb_logo __read_mostly;
 
+void fb_show_charge_logo(struct linux_logo *logo)
+{
+	fb_logo.logo = logo;
+	return;
+}
+
 static void fb_rotate_logo_ud(const u8 *in, u8 *out, u32 width, u32 height)
 {
 	u32 size = width * height, i;
@@ -493,8 +499,8 @@ static int fb_show_logo_line(struct fb_info *info, int rotate,
 		fb_set_logo(info, logo, logo_new, fb_logo.depth);
 	}
 
-	image.dx = 0;
-	image.dy = y;
+	image.dx = (info->var.xres-logo->width)>>1;
+	image.dy = (info->var.yres-logo->height)>>1;
 	image.width = logo->width;
 	image.height = logo->height;
 
@@ -660,7 +666,7 @@ int fb_show_logo(struct fb_info *info, int rotate)
 	int y;
 
 	y = fb_show_logo_line(info, rotate, fb_logo.logo, 0,
-			      num_online_cpus());
+			      1/*num_online_cpus()*/);
 	y = fb_show_extra_logos(info, y, rotate);
 
 	return y;
@@ -1050,6 +1056,7 @@ fb_blank(struct fb_info *info, int blank)
 
  	return ret;
 }
+int fb_vaddr = 0;
 
 static long do_fb_ioctl(struct fb_info *info, unsigned int cmd,
 			unsigned long arg)

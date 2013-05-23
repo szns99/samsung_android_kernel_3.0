@@ -3405,6 +3405,8 @@ void OTM8018B_HSD50_RGB_mode(void)
 	spi_16bit_reg_wr(0x29,0x00);
 }
 #endif
+int charger_in_logo = 0;
+EXPORT_SYMBOL(charger_in_logo);
 
 static void __init smdkv210_machine_init(void)
 {
@@ -3428,6 +3430,8 @@ static void __init smdkv210_machine_init(void)
 	key_led_power(1);
 #endif
 
+	s5p_gpio_set_drvstr(S5PV210_GPA1(0),S5P_GPIO_DRVSTR_LV4);
+	s5p_gpio_set_drvstr(S5PV210_GPA1(1),S5P_GPIO_DRVSTR_LV4);
 	s3c_i2c0_set_platdata(NULL);
 	s3c_i2c1_set_platdata(NULL);
 	s3c_i2c2_set_platdata(NULL);
