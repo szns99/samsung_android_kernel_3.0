@@ -958,13 +958,14 @@ static int wm9713_hifi_hw_params(struct snd_pcm_substream *substream,
 	//ac97_write(codec, AC97_EXTENDED_MID, 0xf803);								//AC97_EXTENDED_MID	0x3c
 	ac97_write(codec, AC97_EXTENDED_MID, 0xFA33);
 	//ac97_write(codec, AC97_EXTENDED_MSTATUS, 0xb990);					//AC97_EXTENDED_MSTATUS 0x3e
-	ac97_write(codec, AC97_EXTENDED_MSTATUS, 0xFE7F);
+	ac97_write(codec, AC97_EXTENDED_MSTATUS, 0xF87F);
 
 	//ac97_write(codec, AC97_MASTER, 0x8080);										//AC97_MASTER		0x02
 	ac97_write(codec, AC97_MASTER, 0x0000);
 	ac97_write(codec, AC97_HEADPHONE, 0x0606);									//AC97_HEADPHONE		0x04
+	//ac97_write(codec, AC97_MASTER_MONO, 0x0000);								//AC97_MASTER_MONO		0x06
 	//ac97_write(codec, AC97_REC_GAIN, 0x00aa);									//AC97_REC_GAIN		0x1c
-	ac97_write(codec, AC97_REC_GAIN, 0x1200);
+	ac97_write(codec, AC97_REC_GAIN, 0x12a0);
 	ac97_write(codec, AC97_EXTENDED_STATUS, 0x0411);						//AC97_EXTENDED_STATUS	0x2a
 	ac97_write(codec, AC97_PCM_FRONT_DAC_RATE, 0xAC44);					//AC97_PCM_FRONT_DAC_RATE 0x2c
 	
