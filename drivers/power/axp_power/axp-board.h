@@ -188,7 +188,7 @@ static struct regulator_init_data axp_regl_init_data[] = {
 			.name = "axp_buck2",//VDDINT
 			.min_uV = AXP_DCDC2_MIN,
 			.max_uV = AXP_DCDC2_MAX,
-			.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
+			.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
 //#if defined (CONFIG_KP_OUTPUTINIT)
 //			.initial_state = PM_SUSPEND_STANDBY,
 //			.state_standby = {
@@ -199,7 +199,7 @@ static struct regulator_init_data axp_regl_init_data[] = {
 			.state_mem	= {
 				.uV	= 1000000,
 				.mode	= REGULATOR_MODE_NORMAL,
-				.enabled = 0,
+				.disabled = 1,
 			},
 		},
 		.num_consumer_supplies = ARRAY_SIZE(buck2_data),
@@ -210,7 +210,7 @@ static struct regulator_init_data axp_regl_init_data[] = {
 			.name = "axp_buck3",//VDDARM
 			.min_uV = AXP_DCDC3_MIN,
 			.max_uV = AXP_DCDC3_MAX,
-			.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE,
+			.valid_ops_mask = REGULATOR_CHANGE_VOLTAGE | REGULATOR_CHANGE_STATUS,
 //#if defined (CONFIG_KP_OUTPUTINIT)
 //			.initial_state = PM_SUSPEND_STANDBY,
 //			.state_standby = {
@@ -220,8 +220,8 @@ static struct regulator_init_data axp_regl_init_data[] = {
 //#endif
 			.state_mem	= {
 				.uV	= 950000,
-				.mode	= REGULATOR_MODE_STANDBY,
-				.enabled = 0,
+				.mode	= REGULATOR_MODE_NORMAL,
+				.disabled = 1,
 			},
 		},
 		.num_consumer_supplies = ARRAY_SIZE(buck3_data),
