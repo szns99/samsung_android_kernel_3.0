@@ -2139,7 +2139,8 @@ void SPI_Initial(void)
 	else
 	{
 		s3c_gpio_cfgpin(S5PV210_GPJ2(4), S3C_GPIO_SFN(1));
-		s3c_gpio_setpull(S5PV210_GPJ2(4), S3C_GPIO_PULL_NONE);
+		s3c_gpio_setpull(S5PV210_GPJ2(4), S3C_GPIO_PULL_UP);
+		s5p_gpio_set_drvstr(S5PV210_GPJ2(4),S5P_GPIO_DRVSTR_LV4);
 		gpio_direction_output(S5PV210_GPJ2(4), 1);
 	}
 	err = gpio_request(S5PV210_GPJ2(5), "PWM_PWR");
@@ -2150,7 +2151,8 @@ void SPI_Initial(void)
 	else
 	{
 		s3c_gpio_cfgpin(S5PV210_GPJ2(5), S3C_GPIO_SFN(1));
-		s3c_gpio_setpull(S5PV210_GPJ2(5), S3C_GPIO_PULL_NONE);
+		s3c_gpio_setpull(S5PV210_GPJ2(5), S3C_GPIO_PULL_UP);
+		s5p_gpio_set_drvstr(S5PV210_GPJ2(5),S5P_GPIO_DRVSTR_LV4);
 		gpio_direction_output(S5PV210_GPJ2(5), 1);
 	}
 	
@@ -2163,7 +2165,8 @@ void SPI_Initial(void)
 	else
 	{
 		s3c_gpio_cfgpin(S5PV210_GPJ2(3), S3C_GPIO_SFN(1));
-		s3c_gpio_setpull(S5PV210_GPJ2(3), S3C_GPIO_PULL_NONE);
+		s3c_gpio_setpull(S5PV210_GPJ2(3), S3C_GPIO_PULL_UP);
+		s5p_gpio_set_drvstr(S5PV210_GPJ2(3),S5P_GPIO_DRVSTR_LV4);
 		gpio_direction_output(S5PV210_GPJ2(3), 1);
 	}
 
@@ -2175,7 +2178,8 @@ void SPI_Initial(void)
 	else
 	{
 		s3c_gpio_cfgpin(S5PV210_GPB(1), S3C_GPIO_SFN(1));
-		s3c_gpio_setpull(S5PV210_GPB(1), S3C_GPIO_PULL_NONE);
+		s3c_gpio_setpull(S5PV210_GPB(1), S3C_GPIO_PULL_UP);
+		s5p_gpio_set_drvstr(S5PV210_GPB(1),S5P_GPIO_DRVSTR_LV4);
 		gpio_direction_output(S5PV210_GPB(1), 1);
 	}
 
@@ -2187,7 +2191,8 @@ void SPI_Initial(void)
 	else
 	{
 		s3c_gpio_cfgpin(S5PV210_GPB(0), S3C_GPIO_SFN(1));
-		s3c_gpio_setpull(S5PV210_GPB(0), S3C_GPIO_PULL_NONE);
+		s3c_gpio_setpull(S5PV210_GPB(0), S3C_GPIO_PULL_UP);
+		s5p_gpio_set_drvstr(S5PV210_GPB(0),S5P_GPIO_DRVSTR_LV4);
 		gpio_direction_output(S5PV210_GPB(0), 1);
 	}
 
@@ -2199,13 +2204,14 @@ void SPI_Initial(void)
 	else
 	{
 		s3c_gpio_cfgpin(S5PV210_GPB(3), S3C_GPIO_SFN(1));
-		s3c_gpio_setpull(S5PV210_GPB(3), S3C_GPIO_PULL_NONE);
+		s3c_gpio_setpull(S5PV210_GPB(3), S3C_GPIO_PULL_UP);
+		s5p_gpio_set_drvstr(S5PV210_GPB(3),S5P_GPIO_DRVSTR_LV4);
 		gpio_direction_output(S5PV210_GPB(3), 1);
 	}
 	
-	mdelay(10);
-	gpio_direction_output(S5PV210_GPJ2(3), 0);
 	mdelay(20);
+	gpio_direction_output(S5PV210_GPJ2(3), 0);
+	mdelay(30);
 	gpio_direction_output(S5PV210_GPJ2(3), 1);
 	mdelay(20);
 }
@@ -2325,7 +2331,7 @@ void Init_5inch(void)
 	SPI_Initial();
 
 	NT35582_Write_Reg(0x1100);
-	mdelay(2000);
+	mdelay(150);
 
 	NT35582_Write_Reg(0xC000); NT35582_Write_Data(0x86);  
 	NT35582_Write_Reg(0xC001); NT35582_Write_Data(0x00); 
@@ -2448,8 +2454,9 @@ void Init_5inch(void)
 	NT35582_Write_Reg(0x3a00); NT35582_Write_Data(0x77);
 	NT35582_Write_Reg(0x3B00); NT35582_Write_Data(0x0B);
 	NT35582_Write_Reg(0x0C00); NT35582_Write_Data(0x60);
-	mdelay(50);
+	mdelay(10);
 	NT35582_Write_Reg(0x2900);
+	mdelay(50);
 }
 
 #if 0
