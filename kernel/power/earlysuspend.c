@@ -28,7 +28,7 @@ enum {
 	DEBUG_SUSPEND = 1U << 2,
 	DEBUG_VERBOSE = 1U << 3,
 };
-static int debug_mask = DEBUG_USER_STATE;
+static int debug_mask = DEBUG_VERBOSE;
 module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
 
 static DEFINE_MUTEX(early_suspend_lock);
@@ -113,8 +113,9 @@ static void early_suspend(struct work_struct *work)
 #endif
 abort:
 	spin_lock_irqsave(&state_lock, irqflags);
-	if (state == SUSPEND_REQUESTED_AND_SUSPENDED)
-		wake_unlock(&main_wake_lock);
+	//if (state == SUSPEND_REQUESTED_AND_SUSPENDED)
+	//	wake_unlock(&main_wake_lock);
+	printk("suspend abort!\n");
 	spin_unlock_irqrestore(&state_lock, irqflags);
 }
 
