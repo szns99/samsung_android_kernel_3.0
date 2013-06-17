@@ -34,7 +34,7 @@ struct pwm_bl_data {
 	int			(*check_fb)(struct device *, struct fb_info *);
 };
 static int suspend_flag = 0;
-
+static struct platform_device *g_pdev = NULL;
 static int pwm_backlight_update_status(struct backlight_device *bl)
 {
 	struct pwm_bl_data *pb = dev_get_drvdata(&bl->dev);
@@ -88,6 +88,7 @@ static int pwm_backlight_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "failed to find platform data\n");
 		return -EINVAL;
 	}
+	g_pdev = pdev;
 
 	if (data->init) {
 		ret = data->init(&pdev->dev);
@@ -190,6 +191,17 @@ static int pwm_backlight_resume(struct platform_device *pdev)
 #define pwm_backlight_suspend	NULL
 #define pwm_backlight_resume	NULL
 #endif
+pm_message_t tmp;
+void s5p_backlight_set(bool on)
+{
+	printk("%s: set %d\n", __func__, on);
+	if(on)
+		pwm_backlight_resume(g_pdev);
+	else
+		pwm_backlight_suspend(g_pdev,tmp);
+	return;
+}
+EXPORT_SYMBOL(s5p_backlight_set);
 
 static struct platform_driver pwm_backlight_driver = {
 	.driver		= {

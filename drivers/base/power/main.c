@@ -28,6 +28,7 @@
 #include <linux/async.h>
 #include <linux/suspend.h>
 #include <linux/timer.h>
+#include <linux/console.h>
 
 #include "../base.h"
 #include "power.h"
@@ -608,6 +609,7 @@ static void dpm_drv_timeout(unsigned long data)
 	printk(KERN_EMERG "**** DPM device timeout: %s (%s)\n", dev_name(dev),
 	       (dev->driver ? dev->driver->name : "no driver"));
 
+	resume_console();
 	printk(KERN_EMERG "dpm suspend stack:\n");
 	show_stack(tsk, NULL);
 

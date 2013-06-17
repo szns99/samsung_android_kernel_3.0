@@ -45,6 +45,8 @@
 #error "FB_S3C_NUM_OVLY_WIN should be less than FB_S3C_DEFAULT_WINDOW"
 #endif
 
+extern void s5p_backlight_set(bool on);
+static struct s3c_platform_fb *g_pdata;
 struct s3c_platform_fb *to_fb_plat(struct device *dev)
 {
 	struct platform_device *pdev = to_platform_device(dev);
@@ -428,6 +430,9 @@ static int s3cfb_blank(int blank_mode, struct fb_info *fb)
 		if (fb->fix.smem_start) {
 			s3cfb_win_map_off(fbdev, win->id);
 			s3cfb_set_window(fbdev, win->id, 1);
+			s5p_backlight_set(true);
+			if (g_pdata->backlight_on)
+	    	g_pdata->backlight_on(NULL);
 		} else
 			dev_info(fbdev->dev,
 				 "[fb%d] no allocated memory for unblank\n",
@@ -443,6 +448,9 @@ static int s3cfb_blank(int blank_mode, struct fb_info *fb)
 	case FB_BLANK_POWERDOWN:
 		s3cfb_set_window(fbdev, win->id, 0);
 		s3cfb_win_map_off(fbdev, win->id);
+		s5p_backlight_set(false);
+		if (g_pdata->backlight_onoff)
+    	g_pdata->backlight_onoff(NULL, false);
 
 		break;
 
@@ -1007,7 +1015,7 @@ static int __devinit s3cfb_probe(struct platform_device *pdev)
 		goto err_vlcd;
 	}
 #endif
-	pdata = to_fb_plat(&pdev->dev);
+	g_pdata = pdata = to_fb_plat(&pdev->dev);
 	if (!pdata) {
 		dev_err(fbdev->dev, "failed to get platform data\n");
 		ret = -EINVAL;
