@@ -135,7 +135,7 @@ static void s5pv210_pm_prepare(void)
         __raw_writel(0xffffffff, (VA_VIC1 + VIC_INT_ENABLE_CLEAR));
         __raw_writel(0xffffffff, (VA_VIC2 + VIC_INT_ENABLE_CLEAR));
         __raw_writel(0xffffffff, (VA_VIC3 + VIC_INT_ENABLE_CLEAR));
-	
+/*	
 	tmp = __raw_readl(S5P_EINT_CON(3));
 	tmp &= ~(7<<28);
 	tmp |= (2<<28);
@@ -159,10 +159,10 @@ static void s5pv210_pm_prepare(void)
 	tmp &= ~(1 << 1 | 1 << 5);
 	__raw_writel(tmp, S5P_WAKEUP_MASK);
 	
+*/	
 	tmp = __raw_readl(S5P_EINT_WAKEUP_MASK);
-	tmp &= ~(1<<31);
+	tmp = ~(1<<31|1<<11);
 	__raw_writel(tmp,S5P_EINT_WAKEUP_MASK);
-	
 	s3c_pm_do_save(s5pv210_core_save, ARRAY_SIZE(s5pv210_core_save));
 }
 

@@ -688,7 +688,7 @@ struct platform_device smdkv210_dm9000 = {
 #ifdef CONFIG_FB_S3C_LTE480WV
 #define S5PV210_LCD_WIDTH 480
 #define S5PV210_LCD_HEIGHT 800
-#define NUM_BUFFER 4
+#define NUM_BUFFER 8
 #endif
 
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (24576 * SZ_1K)
