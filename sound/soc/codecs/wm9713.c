@@ -954,7 +954,7 @@ static int wm9713_hifi_hw_params(struct snd_pcm_substream *substream,
 	//ac97_write(codec, AC97_POWERDOWN, 0x0000);									//AC97_POWERDOWN		0x26
 	ac97_write(codec, AC97_POWERDOWN, 0x010E);
 	//ac97_write(codec, AC97_PHONE, 0x0808);											//AC97_PHONE		0x0c
-	ac97_write(codec, AC97_PHONE, 0x6808);
+	ac97_write(codec, AC97_PHONE, 0x0808);//kelvin
 	//ac97_write(codec, AC97_EXTENDED_MID, 0xf803);								//AC97_EXTENDED_MID	0x3c
 	ac97_write(codec, AC97_EXTENDED_MID, 0xFA33);
 	//ac97_write(codec, AC97_EXTENDED_MSTATUS, 0xb990);					//AC97_EXTENDED_MSTATUS 0x3e
@@ -962,10 +962,11 @@ static int wm9713_hifi_hw_params(struct snd_pcm_substream *substream,
 
 	//ac97_write(codec, AC97_MASTER, 0x8080);										//AC97_MASTER		0x02
 	ac97_write(codec, AC97_MASTER, 0x0000);
-	ac97_write(codec, AC97_HEADPHONE, 0x0606);									//AC97_HEADPHONE		0x04
+	ac97_write(codec, AC97_HEADPHONE, 0x0606);//kelvin									//AC97_HEADPHONE		0x04
 	//ac97_write(codec, AC97_MASTER_MONO, 0x0000);								//AC97_MASTER_MONO		0x06
 	//ac97_write(codec, AC97_REC_GAIN, 0x00aa);									//AC97_REC_GAIN		0x1c
-	ac97_write(codec, AC97_REC_GAIN, 0x12a0);
+	ac97_write(codec, AC97_REC_GAIN, 0x1CA0);//kelvin 0x14A0
+	ac97_write(codec, AC97_REC_GAIN_MIC, 0x1000);//kelvin
 	ac97_write(codec, AC97_EXTENDED_STATUS, 0x0411);						//AC97_EXTENDED_STATUS	0x2a
 	ac97_write(codec, AC97_PCM_FRONT_DAC_RATE, 0xAC44);					//AC97_PCM_FRONT_DAC_RATE 0x2c
 	
@@ -975,7 +976,7 @@ static int wm9713_hifi_hw_params(struct snd_pcm_substream *substream,
 	ac97_write(codec, AC97_LINE, 0x0068);
 	ac97_write(codec, AC97_VIDEO, 0xfe00);
 #else
-	ac97_write(codec, AC97_VIDEO, 0xd612);											//AC97_VIDEO		0x14
+	ac97_write(codec, AC97_VIDEO, 0xd600);											//AC97_VIDEO		0x14
 #endif
 	return 0;
 }
