@@ -24,6 +24,7 @@
 
 struct pwm_bl_data {
 	struct pwm_device	*pwm;
+	int bl_ref;
 	struct device		*dev;
 	unsigned int		period;
 	unsigned int		min_brightness;
@@ -49,7 +50,12 @@ static int pwm_backlight_update_status(struct backlight_device *bl)
 	cur_brightness = cur_brightness < 0 ? 0 : cur_brightness;
 	cur_brightness = cur_brightness > max ? max : cur_brightness;
 	brightness = (max-min)*cur_brightness/255+min;
-	brightness = brightness * pb->period/255;
+	if (pb->bl_ref){
+		brightness = (255-brightness) * pb->period/255;
+	}
+	else{
+		brightness = brightness * pb->period/255;
+	}
 	pwm_config(pb->pwm, brightness, pb->period);
 	pb->lth_brightness=cur_brightness;
 	pwm_enable(pb->pwm);
@@ -109,6 +115,7 @@ static int pwm_backlight_probe(struct platform_device *pdev)
 	pb->dev = &pdev->dev;
 	pb->min_brightness = data->min_brightness;
 	pb->max_brightness = data->max_brightness;
+	pb->bl_ref =data->bl_ref;
 
 	pb->pwm = pwm_request(data->pwm_id, "backlight");
 	if (IS_ERR(pb->pwm)) {

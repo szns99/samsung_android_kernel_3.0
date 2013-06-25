@@ -1,7 +1,7 @@
 #if defined (CONFIG_USE_COL)
 
 extern struct wake_lock batt_wake_lock;
-//extern void rk30_pm_power_off(void);
+extern void axp_power_off(void);
 extern uint8_t axp_ocv_restcap(struct axp_charger *charger);
 
 static void axp_set_basecap(struct axp_charger *charger, int base_cap)
@@ -482,7 +482,7 @@ static int axp_suspend(struct platform_device *dev, pm_message_t state)
 	axp_set_chargecurrent(charger->chgsuscur);
 #endif
 
-	/* 设置阈值时间为127分钟 */
+	/* ?柚勉兄凳奔湮?127分钟 */
 	axp_write(charger->master, AXP_TIMER_CTL, 0x80);
 	axp_write(charger->master, AXP_TIMER_CTL, 0x7F);
 

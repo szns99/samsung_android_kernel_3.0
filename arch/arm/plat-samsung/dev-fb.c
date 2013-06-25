@@ -26,55 +26,6 @@
 #include <plat/cpu.h>
 #include <../../../drivers/video/samsung/s3cfb.h>
 #include <mach/media.h>
-#if 0
-static struct resource s3c_fb_resource[] = {
-	[0] = {
-		.start = S3C_PA_FB,
-		.end   = S3C_PA_FB + SZ_16K - 1,
-		.flags = IORESOURCE_MEM,
-	},
-	[1] = {
-		.start = IRQ_LCD_VSYNC,
-		.end   = IRQ_LCD_VSYNC,
-		.flags = IORESOURCE_IRQ,
-	},
-	[2] = {
-		.start = IRQ_LCD_FIFO,
-		.end   = IRQ_LCD_FIFO,
-		.flags = IORESOURCE_IRQ,
-	},
-	[3] = {
-		.start = IRQ_LCD_SYSTEM,
-		.end   = IRQ_LCD_SYSTEM,
-		.flags = IORESOURCE_IRQ,
-	},
-};
-
-struct platform_device s3c_device_fb = {
-	.name		  = "s3c-fb",
-	.id		  = -1,
-	.num_resources	  = ARRAY_SIZE(s3c_fb_resource),
-	.resource	  = s3c_fb_resource,
-	.dev.dma_mask	  = &s3c_device_fb.dev.coherent_dma_mask,
-	.dev.coherent_dma_mask = 0xffffffffUL,
-};
-
-void __init s3c_fb_set_platdata(struct s3c_fb_platdata *pd)
-{
-	struct s3c_fb_platdata *npd;
-
-	if (!pd) {
-		printk(KERN_ERR "%s: no platform data\n", __func__);
-		return;
-	}
-
-	npd = kmemdup(pd, sizeof(struct s3c_fb_platdata), GFP_KERNEL);
-	if (!npd)
-		printk(KERN_ERR "%s: no memory for platform data\n", __func__);
-
-	s3c_device_fb.dev.platform_data = npd;
-}
-#endif
 static struct resource s3cfb_resource[] = {
         [0] = {
                 .start = S5P_PA_LCD,

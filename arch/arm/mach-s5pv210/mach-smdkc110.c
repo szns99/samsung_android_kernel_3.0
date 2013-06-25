@@ -612,63 +612,7 @@ static struct resource smdkv210_dm9000_resources[] = {
 
 
 #ifdef CONFIG_REGULATOR
-static struct regulator_consumer_supply smdkv210_b_pwr_5v_consumers[] = {
-        {
-                /* WM8580 */
-                .supply         = "PVDD",
-                .dev_name       = "0-001b",
-        },
-};
-
-static struct regulator_init_data smdkv210_b_pwr_5v_data = {
-        .constraints = {
-                .always_on = 1,
-        },
-        .num_consumer_supplies  = ARRAY_SIZE(smdkv210_b_pwr_5v_consumers),
-        .consumer_supplies      = smdkv210_b_pwr_5v_consumers,
-};
-
-static struct fixed_voltage_config smdkv210_b_pwr_5v_pdata = {
-        .supply_name    = "B_PWR_5V",
-        .microvolts     = 5000000,
-        .init_data      = &smdkv210_b_pwr_5v_data,
-	.gpio		= -1,
-};
-
-static struct platform_device smdkv210_b_pwr_5v = {
-        .name          = "reg-fixed-voltage",
-        .id            = -1,
-        .dev = {
-                .platform_data = &smdkv210_b_pwr_5v_pdata,
-        },
-};
 #endif
-#ifdef CONFIG_TOUCHSCREEN_EGALAX
-static struct i2c_gpio_platform_data i2c5_platdata = {
-        .sda_pin                = S5PV210_GPB(6),
-        .scl_pin                = S5PV210_GPB(7),
-        .udelay                 = 2,
-        .sda_is_open_drain      = 0,
-        .scl_is_open_drain      = 0,
-        .scl_is_output_only     = 0.
-};
-
-//static struct platform_device   s3c_device_i2c5 = {
-struct platform_device   s3c_device_i2c5 = {
-        .name                   = "i2c-gpio",
-        .id                     = 5,
-        .dev.platform_data      = &i2c5_platdata,
-};
-
-static struct i2c_board_info i2c_devs5[] __initdata = {
-        {
-                I2C_BOARD_INFO(EETI_TS_DEV_NAME, 0x04),
-                .platform_data = &egalax_platdata,
-                .irq = IRQ_EINT6,
-        },
-};
-#endif
-
 
 static struct dm9000_plat_data smdkv210_dm9000_platdata = {
 	.flags		= DM9000_PLATF_16BITONLY | DM9000_PLATF_NO_EEPROM,
@@ -833,22 +777,6 @@ static void __init android_pmem_set_platdata(void)
 }
 #endif
 
-
-static void smdkv210_lte480wv_set_power(struct plat_lcd_data *pd,
-					unsigned int power)
-{
-}
-
-static struct plat_lcd_data smdkv210_lcd_lte480wv_data = {
-	.set_power	= smdkv210_lte480wv_set_power,
-};
-
-static struct platform_device smdkv210_lcd_lte480wv = {
-	.name			= "platform-lcd",
-	.dev.parent		= &s3c_device_fb.dev,
-	.dev.platform_data	= &smdkv210_lcd_lte480wv_data,
-};
-
 //#define S5PV210_LCD_WIDTH  800
 //#define S5PV210_LCD_HEIGHT 480
 #ifdef CONFIG_FB_S3C_LTE480WV
@@ -926,14 +854,14 @@ static void lte480wv_cfg_gpio(struct platform_device *pdev)
 static int lte480wv_backlight_on(struct platform_device *pdev)
 {
 	printk("lte480wv_backlight_on.....................\n");
-  gpio_direction_output(S5PV210_GPJ2(5), 1);
+  gpio_direction_output(S5PV210_GPH2(0), 1);
 }
 
 
 static int lte480wv_backlight_off(struct platform_device *pdev, int onoff)
 {
 	printk("lte480wv_backlight_off.....................\n");
-  gpio_direction_output(S5PV210_GPJ2(5), 0);
+  gpio_direction_output(S5PV210_GPH2(0), 0);
   return 0;
 }
 
@@ -1018,6 +946,7 @@ static void smdkv210_backlight_exit(struct device *dev)
 
 static struct platform_pwm_backlight_data smdkv210_backlight_data = {
 	.pwm_id		= 0,
+	.bl_ref   = 1,
 	.min_brightness	= 64,
 	.max_brightness	= 255,
 	.dft_brightness	= 192,
@@ -1338,7 +1267,7 @@ static struct platform_device *smdkv210_devices[] __initdata = {
 //	&s5pv210_device_spi1,
 #endif
 #ifdef CONFIG_REGULATOR
-        &smdkv210_b_pwr_5v,
+
 #endif
 #ifdef CONFIG_S5PV210_POWER_DOMAIN
 	&s5pv210_pd_tv,
@@ -2143,10 +2072,23 @@ void SPI_Initial(void)
 		s5p_gpio_set_drvstr(S5PV210_GPJ2(4),S5P_GPIO_DRVSTR_LV4);
 		gpio_direction_output(S5PV210_GPJ2(4), 1);
 	}
-	err = gpio_request(S5PV210_GPJ2(5), "PWM_PWR");
+	err = gpio_request(S5PV210_GPH2(0), "BL_EN");
 	if (err)
 	{
-		printk(KERN_ERR "failed to request GPJ2(5) for PWM_PWR\n");
+		printk(KERN_ERR "failed to request GPJ2(5) for BL_EN\n");
+	}
+	else
+	{
+		s3c_gpio_cfgpin(S5PV210_GPH2(0), S3C_GPIO_SFN(1));
+		s3c_gpio_setpull(S5PV210_GPH2(0), S3C_GPIO_PULL_UP);
+		s5p_gpio_set_drvstr(S5PV210_GPH2(0),S5P_GPIO_DRVSTR_LV4);
+		gpio_direction_output(S5PV210_GPH2(0), 0);
+	}
+	
+	err = gpio_request(S5PV210_GPJ2(5), "BL_PWR");
+	if (err)
+	{
+		printk(KERN_ERR "failed to request GPJ2(5) for BL_PWR\n");
 	}
 	else
 	{
@@ -2218,11 +2160,13 @@ void SPI_Initial(void)
 
 void SPI_Uninitial(void)
 {
+	gpio_free(S5PV210_GPJ2(5));
 	gpio_free(S5PV210_GPJ2(4));
 	gpio_free(S5PV210_GPJ2(3));
 	gpio_free(S5PV210_GPB(1));
 	gpio_free(S5PV210_GPB(0));
 	gpio_free(S5PV210_GPB(3));
+	gpio_free(S5PV210_GPH2(0));
 }
 
 void SetCS(int bHigh)

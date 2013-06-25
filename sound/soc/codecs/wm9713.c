@@ -28,7 +28,7 @@
 #include <sound/soc.h>
 
 #include "wm9713.h"
-
+#define CONFIG_SOUND_WM9713_INPUT_STREAM_MIC
 struct wm9713_priv {
 	u32 pll_in; /* PLL input frequency */
 };
@@ -976,7 +976,7 @@ static int wm9713_hifi_hw_params(struct snd_pcm_substream *substream,
 	ac97_write(codec, AC97_LINE, 0x0068);
 	ac97_write(codec, AC97_VIDEO, 0xfe00);
 #else
-	ac97_write(codec, AC97_VIDEO, 0xd600);											//AC97_VIDEO		0x14
+	ac97_write(codec, AC97_VIDEO, 0xd612);											//AC97_VIDEO		0x14
 #endif
 	return 0;
 }
@@ -1022,6 +1022,19 @@ static int ac97_hifi_prepare(struct snd_pcm_substream *substream,
 	else
 		reg = AC97_PCM_LR_ADC_RATE;
 
+	ac97_write(codec,0x26,0);
+	ac97_write(codec,0x0c,0x0808);
+	ac97_write(codec,0x3c,0xf803);
+	ac97_write(codec,0x3e,0xb990);
+
+#ifdef CONFIG_SOUND_WM9713_INPUT_STREAM_MIC
+	ac97_write(codec, 0x5c, 0x0002);
+	ac97_write(codec, AC97_LINE, 0x0068);
+	ac97_write(codec, AC97_VIDEO, 0xfe00);
+#else
+	ac97_write(codec, AC97_VIDEO, 0xd612);											//AC97_VIDEO		0x14
+#endif
+	}
 	return ac97_write(codec, reg, runtime->rate);
 }
 
@@ -1036,8 +1049,6 @@ static int ac97_aux_prepare(struct snd_pcm_substream *substream,
 	ac97_write(codec, AC97_EXTENDED_STATUS, vra | 0x1);
 	xsle = ac97_read(codec, AC97_PCI_SID);
 	ac97_write(codec, AC97_PCI_SID, xsle | 0x8000);
-
-	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
 		return -ENODEV;
 
 	return ac97_write(codec, AC97_PCM_SURR_DAC_RATE, runtime->rate);

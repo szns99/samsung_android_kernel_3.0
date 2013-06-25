@@ -8,6 +8,7 @@
 
 struct platform_pwm_backlight_data {
 	int pwm_id;
+	int bl_ref;
 	unsigned int min_brightness;
 	unsigned int max_brightness;
 	unsigned int dft_brightness;
