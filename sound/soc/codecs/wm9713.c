@@ -1034,7 +1034,6 @@ static int ac97_hifi_prepare(struct snd_pcm_substream *substream,
 #else
 	ac97_write(codec, AC97_VIDEO, 0xd612);											//AC97_VIDEO		0x14
 #endif
-	}
 	return ac97_write(codec, reg, runtime->rate);
 }
 

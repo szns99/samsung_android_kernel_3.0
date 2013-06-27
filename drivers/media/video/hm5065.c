@@ -103,7 +103,8 @@ static struct hm5065_format_struct {
 	int	fps;
 	__u8 index;
 	int	bpp;   /* bits per pixel */
-}  hm5065_formats[] = {
+}
+hm5065_formats[] = {
 	{
 		.desc		= "HM5065 5M",
 		.pixelformat	= V4L2_PIX_FMT_YUYV,
@@ -116,17 +117,6 @@ static struct hm5065_format_struct {
 		.bpp		= 16,
 	},
 	{
-		.desc		= "HM5065 1M",
-		.pixelformat	= V4L2_PIX_FMT_YUYV,
-		.width		= 1024,
-		.height		= 768,
-		.resolution_width		= HM5065_CAPTURE_WIDTH,
-		.resolution_height		= HM5065_CAPTURE_HEIGHT,				
-		.fps		= 15,
-		.index		= 1,
-		.bpp		= 16,
-	},	
-	{
 		.desc		= "HM5065 2M",
 		.pixelformat	= V4L2_PIX_FMT_YUYV,
 		.width		= 1600,
@@ -137,6 +127,18 @@ static struct hm5065_format_struct {
 		.index		= 1,
 		.bpp		= 16,
 	},	
+	{
+		.desc		= "HM5065 1M",
+		.pixelformat	= V4L2_PIX_FMT_YUYV,
+		.width		= 1024,
+		.height		= 768,
+		.resolution_width		= HM5065_CAPTURE_WIDTH,
+		.resolution_height		= HM5065_CAPTURE_HEIGHT,				
+		.fps		= 15,
+		.index		= 1,
+		.bpp		= 16,
+	},
+	/*	
 	{
 		.desc		= "HM5065 VGA",
 		.pixelformat	= V4L2_PIX_FMT_YUYV,
@@ -214,6 +216,7 @@ static struct hm5065_format_struct {
 		.index		= 1,
 		.bpp		= 16,
 	},
+	*/
 };
 
 #define N_HM5065_FMTS  (sizeof(hm5065_formats) / sizeof((hm5065_formats)[0]))	
@@ -224,6 +227,8 @@ enum
     HM5065_PREVIEW_VGA,
     //HM5065_CAPTRUE_UXGA,
     HM5065_CAPTRUE_5M,
+    HM5065_CAPTRUE_2M,
+    HM5065_CAPTRUE_1M,
 };
 
 struct hm5065_enum_framesize
@@ -237,7 +242,9 @@ struct hm5065_enum_framesize hm5065_framesize_list[] =
 {
     { HM5065_PREVIEW_VGA, HM5065_PREVIEW_WIDTH, HM5065_PREVIEW_HEIGHT },
     //{ HM5065_CAPTRUE_UXGA, HM5065_CAPTURE_WIDTH, HM5065_CAPTURE_HEIGHT }
-    { HM5065_CAPTRUE_5M, 2592, 1936}
+    { HM5065_CAPTRUE_5M, 2592, 1936},
+    { HM5065_CAPTRUE_2M, 1600, 1200},
+    { HM5065_CAPTRUE_1M, 1024, 768}
 };
 
 static u8 af_pos_h = 0;
@@ -983,6 +990,20 @@ static int hm5065_s_fmt(struct v4l2_subdev *sd, struct v4l2_format *fmt)
     {
         //state->framesize_index = HM5065_CAPTRUE_UXGA;
         state->framesize_index = HM5065_CAPTRUE_5M;
+        dev_dbg_cam(&client->dev, "%s: Set framesize_index:%d\n", __func__, state->framesize_index);
+    }
+    else if(hm5065_formats[index].resolution_width==1600&&
+        hm5065_formats[index].resolution_height==1200)
+    {
+        //state->framesize_index = HM5065_CAPTRUE_UXGA;
+        state->framesize_index = HM5065_CAPTRUE_2M;
+        dev_dbg_cam(&client->dev, "%s: Set framesize_index:%d\n", __func__, state->framesize_index);
+    }
+    else if(hm5065_formats[index].resolution_width==1024&&
+        hm5065_formats[index].resolution_height==768)
+    {
+        //state->framesize_index = HM5065_CAPTRUE_UXGA;
+        state->framesize_index = HM5065_CAPTRUE_1M;
         dev_dbg_cam(&client->dev, "%s: Set framesize_index:%d\n", __func__, state->framesize_index);
     }
     else
