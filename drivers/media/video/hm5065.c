@@ -38,7 +38,7 @@
 /* Default resolution & pixelformat. plz ref hm5065_platform.h */
 #define DEFAULT_RES			WVGA	/* Index of resoultion */
 #define DEFAUT_FPS_INDEX	HM5065_15FPS
-#define DEFAULT_FMT			V4L2_PIX_FMT_NV21  //V4L2_PIX_FMT_YUYV	/* YUV422 */
+#define DEFAULT_FMT			V4L2_PIX_FMT_YUV420  //V4L2_PIX_FMT_YUYV	/* YUV422 */
 extern int mi108_cam_i2c(unsigned char addr, unsigned short reg, unsigned char value);
 
 /*
@@ -107,11 +107,11 @@ static struct hm5065_format_struct {
 hm5065_formats[] = {
 	{
 		.desc		= "HM5065 VGA",
-		.pixelformat	= V4L2_PIX_FMT_YUYV,
+		.pixelformat	= V4L2_PIX_FMT_YUV420,
 		.width		= 640,
 		.height		= 480,
-		.resolution_width		= HM5065_CAPTURE_WIDTH,
-		.resolution_height		= HM5065_CAPTURE_HEIGHT,				
+		.resolution_width		= 640,
+		.resolution_height		= 480,				
 		.fps		= 15,
 		.index		= 1,
 		.bpp		= 16,
@@ -132,8 +132,8 @@ hm5065_formats[] = {
 		.pixelformat	= V4L2_PIX_FMT_YUYV,
 		.width		= 1600,
 		.height		= 1200,
-		.resolution_width		= HM5065_CAPTURE_WIDTH,
-		.resolution_height		= HM5065_CAPTURE_HEIGHT,				
+		.resolution_width		= 1600,
+		.resolution_height		= 1200,				
 		.fps		= 15,
 		.index		= 1,
 		.bpp		= 16,
@@ -143,8 +143,8 @@ hm5065_formats[] = {
 		.pixelformat	= V4L2_PIX_FMT_YUYV,
 		.width		= 1024,
 		.height		= 768,
-		.resolution_width		= HM5065_CAPTURE_WIDTH,
-		.resolution_height		= HM5065_CAPTURE_HEIGHT,				
+		.resolution_width		= 1024,
+		.resolution_height		= 768,				
 		.fps		= 15,
 		.index		= 1,
 		.bpp		= 16,
@@ -638,15 +638,25 @@ static int hm5065_check_exp(struct v4l2_subdev *sd)
 static int hm5065_Snapshot(struct v4l2_subdev *sd)
 {
 	int err;
-    u8 value1, value2;
-
+  u8 value1, value2;
+	struct hm5065_state *state = to_state(sd);
     printk("hm5065_Snapshot \n");
 
     hm5065_read(sd, 0x06F0, &value1);	//700,af_pos_h
     hm5065_read(sd, 0x06F1, &value2);	//701,af_pos_l
     printk("capture brant read target af pos: %02x %02x.\n", value1, value2);
-
-	err = hm5065_write_regs(sd, hm5065_regs_capture1, hm5065_regs_capture1_size);
+		if (state->framesize_index == HM5065_CAPTRUE_5M){
+			err = hm5065_write_regs(sd, hm5065_regs_capture5M, hm5065_regs_capture5M_size);
+		}
+		else if (state->framesize_index == HM5065_CAPTRUE_2M){
+			err = hm5065_write_regs(sd, hm5065_regs_capture2M, hm5065_regs_capture2M_size);
+		}
+		else if (state->framesize_index == HM5065_CAPTRUE_1M){
+			err = hm5065_write_regs(sd, hm5065_regs_capture1M, hm5065_regs_capture1M_size);
+		}
+		else{
+			return -EIO;
+		}
     
     hm5065_i2c_reg(sd, 0x0734, value1 & 0xFF);	//af_pos_h
     hm5065_i2c_reg(sd, 0x0735, value2 & 0xFF);	//af_pos_L
@@ -948,11 +958,13 @@ static int hm5065_s_fmt(struct v4l2_subdev *sd, struct v4l2_format *fmt)
     char pf_str[20];
     int index;
     struct v4l2_pix_format *pix = &fmt->fmt.pix;
+    
+    //if (fmt->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+  	//{
+  	//}
 
     for (index = 0; index < N_HM5065_FMTS; index++){
-	printk("index = %d, format %x, width =%d h = %d\n", index, 
-		hm5065_formats[index].pixelformat, hm5065_formats[index].width, hm5065_formats[index].height);
-
+			printk("index = %d, format %x, width =%d h = %d\n", index,hm5065_formats[index].pixelformat, hm5065_formats[index].width, hm5065_formats[index].height);
     	if (hm5065_formats[index].pixelformat == pix->pixelformat){
     		if (pix->width >= hm5065_formats[index].width &&
     				pix->height >= hm5065_formats[index].height){
@@ -964,13 +976,13 @@ static int hm5065_s_fmt(struct v4l2_subdev *sd, struct v4l2_format *fmt)
 
     if (index >= N_HM5065_FMTS){
 	//WARN_ON(1);
-    	dev_dbg_cam(&client->dev,"##!!## %s %x  h = %d w = %d error!!!\n",__func__,pix->pixelformat, pix->height, pix->width);
+    	printk("##!!## %s %x  h = %d w = %d error!!!\n",__func__,pix->pixelformat, pix->height, pix->width);
     	//return -EINVAL;
     }
    
     memcpy(pf_str,(char*)&(fmt->fmt.pix.pixelformat),4);
     pf_str[4] = '\0';
-    dev_dbg_cam(&client->dev, "##!!##%s called:type:%d,width:%d,height:%d,pixelformat:%s,bytesperline:%d,sizeimage:%d\n"
+    printk("##!!##%s called:type:%d,width:%d,height:%d,pixelformat:%s,bytesperline:%d,sizeimage:%d\n"
     		,__func__
     		,fmt->type
     		,fmt->fmt.pix.width
