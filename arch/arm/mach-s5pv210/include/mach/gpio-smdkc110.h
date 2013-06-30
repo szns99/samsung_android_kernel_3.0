@@ -8,6 +8,7 @@
 /*camera power pin*/
 #define CAMERA_POWER_PIN		S5PV210_GPJ3(3)
 #define GPIO_CAM_FLASH_EN		S5PV210_GPD0(1)
+#define GPIO_CAM_FLASH_MODE		S5PV210_GPJ3(0)
 /*camera ready pin*/
 //#define CAMERA_INT_PIN			S5PV210_GPH3(2)
 

@@ -1456,10 +1456,21 @@ static void hm5065_init(void)
 		gpio_direction_output(CAMERA_POWER_PIN, 0);
 	}
 	
+	err = gpio_request(GPIO_CAM_FLASH_MODE, "GPIO_CAM_FLASH_MODE");
+	if (err)
+	{
+		printk(KERN_ERR "failed to request GPJ3(0) for GPIO_CAM_FLASH_MODE\n");
+	}
+	else
+	{
+		s3c_gpio_cfgpin(GPIO_CAM_FLASH_MODE, S3C_GPIO_OUTPUT);
+		s3c_gpio_setpull(GPIO_CAM_FLASH_MODE, S3C_GPIO_PULL_NONE);
+		gpio_direction_output(GPIO_CAM_FLASH_MODE, 0);
+	}
 	err = gpio_request(GPIO_CAM_FLASH_EN, "GPIO_CAM_FLASH_EN");
 	if (err)
 	{
-		printk(KERN_ERR "failed to request GPJ3(3) for GPIO_CAM_FLASH_EN\n");
+		printk(KERN_ERR "failed to request GPJD0(1) for GPIO_CAM_FLASH_EN\n");
 	}
 	else
 	{
@@ -1492,6 +1503,7 @@ static int smdkv210_mipi_cam_power(int on)
 #ifdef CONFIG_VIDEO_HM5065
 static int flashForHM5065(int en)
 {
+	printk("flash for HM5065 state:%d\n",en);
 	gpio_set_value(GPIO_CAM_FLASH_EN,en);
 	return 0;
 }

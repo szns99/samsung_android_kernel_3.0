@@ -24,13 +24,13 @@
 #include "hm5065.h"
 
 //#define TEST_CODE
-#define DEBUG_CAMERA
+//#define DEBUG_CAMERA
 
 #ifdef DEBUG_CAMERA
 #define dev_dbg_cam(dev, format, arg...)		\
 	dev_printk(KERN_INFO, dev , format , ## arg)
 #else
-#define dev_dbg_cam
+#define dev_dbg_cam(...)
 #endif
 
 #define HM5065_DRIVER_NAME	"HM5065"
@@ -106,6 +106,17 @@ static struct hm5065_format_struct {
 }
 hm5065_formats[] = {
 	{
+		.desc		= "HM5065 VGA",
+		.pixelformat	= V4L2_PIX_FMT_YUYV,
+		.width		= 640,
+		.height		= 480,
+		.resolution_width		= HM5065_CAPTURE_WIDTH,
+		.resolution_height		= HM5065_CAPTURE_HEIGHT,				
+		.fps		= 15,
+		.index		= 1,
+		.bpp		= 16,
+	},	
+	{
 		.desc		= "HM5065 5M",
 		.pixelformat	= V4L2_PIX_FMT_YUYV,
 		.width		= 2592,
@@ -139,17 +150,6 @@ hm5065_formats[] = {
 		.bpp		= 16,
 	},
 	/*	
-	{
-		.desc		= "HM5065 VGA",
-		.pixelformat	= V4L2_PIX_FMT_YUYV,
-		.width		= 640,
-		.height		= 480,
-		.resolution_width		= HM5065_CAPTURE_WIDTH,
-		.resolution_height		= HM5065_CAPTURE_HEIGHT,				
-		.fps		= 15,
-		.index		= 1,
-		.bpp		= 16,
-	},	
 	{
 		.desc		= "HM5065 QVGA",
 		.pixelformat	= V4L2_PIX_FMT_YUYV,
@@ -249,7 +249,7 @@ struct hm5065_enum_framesize hm5065_framesize_list[] =
 
 static u8 af_pos_h = 0;
 static u8 af_pos_l = 0;
-
+static unsigned int is_flash_need = 0;
 
 #ifdef TEST_CODE
 static struct v4l2_subdev *g_sd;
@@ -1363,39 +1363,30 @@ static int hm5065_g_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 
 static int hm5065_checkAufoFlash(struct v4l2_subdev *sd)
 {
-#if 0
 	unsigned char value1 = 0, value2 = 0;
-    u16 value = 0;
+  u16 value = 0;
 	struct hm5065_state *state = to_state(sd);
 
 	hm5065_read(sd, 0x0118, &value1);
-    hm5065_read(sd, 0x0119, &value2);
-    value = ((value1 << 8) & 0xFF00) | (value2 & 0x00FF);
-	printk("%s, avg value is 0x%x\n", __func__, value);
-
+  hm5065_read(sd, 0x0119, &value2);
+  value = ((value1 << 8) & 0xFF00) | (value2 & 0x00FF);
 	
 	if(state->userset.flash_mode == FLASH_MODE_AUTO)
 	{
 	
-		mi108_set_flash_status(0);
 		if(value > 0x4880)
 		{
-			setlightOn(0);
-			state->userset.flash_lastStatus = 0;
+			printk("do not need flash\n");
+			is_flash_need = 0;
 		}
 		else if(value <= 0x4880)
 		{
-			setlightOn(1);
-			state->userset.flash_lastStatus = 1;
+			printk("do need flash\n");
+			is_flash_need = 1;
 		}
-
-
 	}
-#endif	
 	return 0;
 }
-
-
 
 static int hm5065_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 {
@@ -1405,7 +1396,7 @@ static int hm5065_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	int err = 0;
     int index=0;
 
-    printk("hm5065_s_ctrl %x, %d\n", ctrl->id, ctrl->value);
+    //printk("hm5065_s_ctrl %x, %d\n", ctrl->id, ctrl->value);
     
 	switch (ctrl->id) {
 	case V4L2_CID_CAMERA_ISO:
@@ -1426,52 +1417,43 @@ static int hm5065_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 		break;
 	case V4L2_CID_CAMERA_FLASH_MODE:
 		{
-#if 1
-			cancel_delayed_work(&state->work);
+			//cancel_delayed_work(&state->work);
 			state->userset.flash_mode = ctrl->value;
 			switch(ctrl->value)
 			{
 				case FLASH_MODE_OFF:
-					printk("FLASH_MODE_OFF");
-					hm5065_flash_control(sd,0);
-					//mi108_set_flash_status(0);
-					//setlightOn(0);
-					state->userset.flash_lastStatus = 0;
+					printk("FLASH_MODE_OFF\n");
+					is_flash_need = 0;
 					break;
 				case FLASH_MODE_AUTO:
-					printk("FLASH_MODE_AUTO");
-					//mi108_set_flash_status(1);
-					schedule_delayed_work(&state->work, 500);
+					printk("FLASH_MODE_AUTO\n");
+					hm5065_checkAufoFlash(sd);
 					break;
 				case FLASH_MODE_ON:
-					printk("FLASH_MODE_ON");
-					//mi108_set_flash_status(1);
-					hm5065_flash_control(sd,1);
-					//mi108_set_flash_status(0);					
-					//setlightOn(1);
-					state->userset.flash_lastStatus = 1;
+					printk("FLASH_MODE_ON\n");
+					is_flash_need = 1;
 				 	break;
 				case FLASH_MODE_TORCH:
 					printk("FLASH_MODE_TORCH");
-					//mi108_set_flash_status(0);					
-					//setlightOn(1);
-					state->userset.flash_lastStatus = 1;
+					is_flash_need = 1;
 					break;
 			}
-#endif
 	}
 		break;
 	case V4L2_CID_CAMERA_SCENE_MODE:
 		//do not support
 		break;
 	case V4L2_CID_CAM_PREVIEW_ONOFF:
-        dev_dbg_cam(&client->dev, "%s: V4L2_CID_CAM_PREVIEW_ONOFF, value:%d, state->framesize_index:%d\n", \
-			__func__,ctrl->value,state->framesize_index);
+        //dev_dbg_cam(&client->dev, "%s: V4L2_CID_CAM_PREVIEW_ONOFF, value:%d, state->framesize_index:%d\n", \
+			//__func__,ctrl->value,state->framesize_index);
 		cancel_delayed_work(&state->work);
 		//if(state->framesize_index == HM5065_CAPTRUE_UXGA)
-		if(state->framesize_index == HM5065_CAPTRUE_5M)
-		
+		if(state->framesize_index == HM5065_CAPTRUE_5M 
+			|| state->framesize_index == HM5065_CAPTRUE_2M 
+			|| state->framesize_index == HM5065_CAPTRUE_1M)
 		{
+			if (is_flash_need)  hm5065_flash_control(sd,1);
+			msleep(100);
 			err = hm5065_Snapshot(sd);
 		}
 		else
@@ -1479,7 +1461,7 @@ static int hm5065_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 			err = hm5065_preview(sd);
 
 		}
-		schedule_delayed_work(&state->work, 2000);
+		schedule_delayed_work(&state->work, 1000);
 		break;     
 	case V4L2_CID_CAMERA_RESET:
 		dev_dbg(&client->dev, "%s: V4L2_CID_CAMERA_RESET\n", __func__);
@@ -1839,10 +1821,9 @@ static const struct v4l2_subdev_ops hm5065_ops =
 
 static void hm5065_detectled_func(struct work_struct *work)
 {
-	struct hm5065_state *state = container_of((struct delayed_work *)work,
-			struct hm5065_state, work);
-	hm5065_checkAufoFlash(&state->sd);
-	//schedule_delayed_work(&state->work, 500);
+	struct hm5065_state *state = container_of((struct delayed_work *)work,struct hm5065_state, work);
+	printk("----%s---\n",__func__);
+	hm5065_flash_control(&state->sd,0);
 }
 
 /*static void hm5065_debugcheck(struct work_struct *work)
