@@ -646,13 +646,13 @@ static int hm5065_Snapshot(struct v4l2_subdev *sd)
     hm5065_read(sd, 0x06F1, &value2);	//701,af_pos_l
     printk("capture brant read target af pos: %02x %02x.\n", value1, value2);
 		if (state->framesize_index == HM5065_CAPTRUE_5M){
-			err = hm5065_write_regs(sd, hm5065_regs_capture5M, hm5065_regs_capture5M_size);
+			err = hm5065_write_regs(sd, hm5065_regs_capture1, hm5065_regs_capture1_size);
 		}
 		else if (state->framesize_index == HM5065_CAPTRUE_2M){
-			err = hm5065_write_regs(sd, hm5065_regs_capture2M, hm5065_regs_capture2M_size);
+			err = hm5065_write_regs(sd, hm5065_regs_capture1, hm5065_regs_capture1_size);
 		}
 		else if (state->framesize_index == HM5065_CAPTRUE_1M){
-			err = hm5065_write_regs(sd, hm5065_regs_capture1M, hm5065_regs_capture1M_size);
+			err = hm5065_write_regs(sd, hm5065_regs_capture1, hm5065_regs_capture1_size);
 		}
 		else{
 			return -EIO;
